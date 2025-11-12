@@ -1,0 +1,60 @@
+# Build output
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Visual Studio / Rider
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Data files
+data/
+*.csv
+
+# Environment
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+
+# AI/BMAD files
+.ai/
+.bmad-core/
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+*.snupkg

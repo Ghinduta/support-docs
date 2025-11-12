@@ -1,0 +1,58 @@
+# Build output
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data files
+data/*.csv
+data/*.json
+!data/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# ML Models (large files)
+*.zip
+src/StackOverflowRAG.ML/Models/*.zip
+!src/StackOverflowRAG.ML/Models/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Rider
+.idea/
+
+# Docker volumes
+qdrant_storage/
+redis_data/
