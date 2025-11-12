@@ -127,6 +127,11 @@ else
 // Register ingestion service
 builder.Services.AddSingleton<IIngestionService, IngestionService>();
 
+// Configure and register retrieval service
+builder.Services.Configure<RetrievalOptions>(
+    builder.Configuration.GetSection(RetrievalOptions.SectionName));
+builder.Services.AddSingleton<IRetrievalService, RetrievalService>();
+
 // TODO: Add remaining service registrations
 // builder.Services.AddSingleton<IRetrievalService, RetrievalService>();
 // builder.Services.AddSingleton<ILlmService, LlmService>();
@@ -192,6 +197,134 @@ app.MapPost("/ingest", async (
 })
 .WithName("Ingest")
 .WithDescription("Triggers full ingestion pipeline: CSV → Parse → Chunk → Embed → Upsert")
+.WithOpenApi();
+
+// Compare endpoint - shows hybrid vs vector-only side-by-side
+app.MapGet("/search/compare", async (
+    IRetrievalService retrievalService,
+    string query,
+    int topK = 5,
+    CancellationToken cancellationToken = default) =>
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Results.BadRequest(new { error = "Query parameter is required" });
+        }
+
+        // Run both searches in parallel
+        var hybridTask = retrievalService.HybridSearchAsync(query, topK, useHybrid: true, cancellationToken);
+        var vectorTask = retrievalService.SearchAsync(query, topK, cancellationToken);
+
+        await Task.WhenAll(hybridTask, vectorTask);
+
+        var hybridResults = hybridTask.Result;
+        var vectorResults = vectorTask.Result;
+
+        return Results.Ok(new
+        {
+            query,
+            topK,
+            comparison = new
+            {
+                hybrid = new
+                {
+                    resultCount = hybridResults.Count,
+                    avgScore = hybridResults.Count > 0 ? hybridResults.Average(r => r.Score) : 0,
+                    topScore = hybridResults.Count > 0 ? hybridResults.Max(r => r.Score) : 0,
+                    results = hybridResults.Select(r => new
+                    {
+                        r.ChunkId,
+                        r.PostId,
+                        r.QuestionTitle,
+                        r.Score,
+                        chunkPreview = r.ChunkText.Length > 200 ? r.ChunkText.Substring(0, 200) + "..." : r.ChunkText
+                    })
+                },
+                vectorOnly = new
+                {
+                    resultCount = vectorResults.Count,
+                    avgScore = vectorResults.Count > 0 ? vectorResults.Average(r => r.Score) : 0,
+                    topScore = vectorResults.Count > 0 ? vectorResults.Max(r => r.Score) : 0,
+                    results = vectorResults.Select(r => new
+                    {
+                        r.ChunkId,
+                        r.PostId,
+                        r.QuestionTitle,
+                        r.Score,
+                        chunkPreview = r.ChunkText.Length > 200 ? r.ChunkText.Substring(0, 200) + "..." : r.ChunkText
+                    })
+                }
+            },
+            analysis = new
+            {
+                uniqueToHybrid = hybridResults.Count(h => !vectorResults.Any(v => v.ChunkId == h.ChunkId)),
+                uniqueToVector = vectorResults.Count(v => !hybridResults.Any(h => h.ChunkId == v.ChunkId)),
+                sharedResults = hybridResults.Count(h => vectorResults.Any(v => v.ChunkId == h.ChunkId)),
+                rankingDifference = hybridResults.Count > 0 && vectorResults.Count > 0
+                    ? Math.Abs(hybridResults[0].Score - vectorResults[0].Score)
+                    : 0
+            }
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Comparison failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+})
+.WithName("CompareSearch")
+.WithDescription("Compare hybrid vs vector-only search side-by-side")
+.WithOpenApi();
+
+// Search endpoint (temporary for testing Story 2.2)
+app.MapGet("/search", async (
+    IRetrievalService retrievalService,
+    string query,
+    int topK = 5,
+    bool useHybrid = true,
+    CancellationToken cancellationToken = default) =>
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Results.BadRequest(new { error = "Query parameter is required" });
+        }
+
+        var results = useHybrid
+            ? await retrievalService.HybridSearchAsync(query, topK, useHybrid, cancellationToken)
+            : await retrievalService.SearchAsync(query, topK, cancellationToken);
+
+        return Results.Ok(new
+        {
+            query,
+            topK,
+            searchType = useHybrid ? "hybrid" : "vector-only",
+            resultCount = results.Count,
+            results = results.Select(r => new
+            {
+                r.ChunkId,
+                r.PostId,
+                r.QuestionTitle,
+                r.Score,
+                chunkPreview = r.ChunkText.Length > 200 ? r.ChunkText.Substring(0, 200) + "..." : r.ChunkText
+            })
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Search failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+})
+.WithName("Search")
+.WithDescription("Test search endpoint - supports both vector-only and hybrid search")
 .WithOpenApi();
 
 app.Run();

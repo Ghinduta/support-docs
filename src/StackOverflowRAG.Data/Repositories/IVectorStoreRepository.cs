@@ -32,6 +32,24 @@ public interface IVectorStoreRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Performs hybrid search combining vector similarity and keyword matching.
+    /// </summary>
+    /// <param name="queryEmbedding">Query embedding vector</param>
+    /// <param name="queryText">Query text for keyword matching</param>
+    /// <param name="limit">Maximum number of results</param>
+    /// <param name="vectorWeight">Weight for vector score (0.0 to 1.0)</param>
+    /// <param name="keywordWeight">Weight for keyword score (0.0 to 1.0)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of matching chunks with combined scores</returns>
+    Task<List<(DocumentChunk Chunk, float Score)>> HybridSearchAsync(
+        float[] queryEmbedding,
+        string queryText,
+        int limit = 10,
+        double vectorWeight = 0.5,
+        double keywordWeight = 0.5,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets count of chunks in collection.
     /// </summary>
     Task<long> GetCountAsync(CancellationToken cancellationToken = default);

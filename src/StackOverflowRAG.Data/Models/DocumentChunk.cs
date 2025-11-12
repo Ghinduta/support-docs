@@ -37,6 +37,11 @@ public class DocumentChunk
     public float[]? Embedding { get; set; }
 
     /// <summary>
+    /// Similarity score (populated during search, 0.0 to 1.0)
+    /// </summary>
+    public float Score { get; set; }
+
+    /// <summary>
     /// Generates ChunkId from PostId and ChunkIndex
     /// </summary>
     public static string GenerateChunkId(int postId, int chunkIndex)
