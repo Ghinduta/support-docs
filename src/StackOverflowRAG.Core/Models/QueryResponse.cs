@@ -32,14 +32,24 @@ public class QueryMetadata
     public long LatencyMs { get; set; }
 
     /// <summary>
-    /// Estimated token count
+    /// Tokens used (prompt + completion)
     /// </summary>
-    public int EstimatedTokens { get; set; }
+    public int TokensUsed { get; set; }
+
+    /// <summary>
+    /// Estimated cost in USD
+    /// </summary>
+    public double EstimatedCost { get; set; }
+
+    /// <summary>
+    /// Whether the response was served from cache
+    /// </summary>
+    public bool CacheHit { get; set; }
 
     /// <summary>
     /// Number of chunks retrieved
     /// </summary>
-    public int ChunkCount { get; set; }
+    public int RetrievedChunks { get; set; }
 
     /// <summary>
     /// Search type used (hybrid or vector-only)
