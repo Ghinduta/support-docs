@@ -56,3 +56,7 @@ Thumbs.db
 # Docker volumes
 qdrant_storage/
 redis_data/
+
+# AI/Agent tooling
+.claude/
+.bmad-core/

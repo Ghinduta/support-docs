@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Qdrant.Client;
 using Serilog;
 using StackOverflowRAG.Core.Configuration;
+using StackOverflowRAG.Core.Helpers;
 using StackOverflowRAG.Core.Interfaces;
 using StackOverflowRAG.Core.Models;
 using StackOverflowRAG.Core.Services;
@@ -342,7 +343,7 @@ app.MapGet("/search", async (
 .WithDescription("Test search endpoint - supports both vector-only and hybrid search")
 .WithOpenApi();
 
-// Ask endpoint - full RAG pipeline with streaming (Story 2.3 test endpoint)
+// Ask endpoint - full RAG pipeline with streaming and citations (Story 2.4)
 app.MapGet("/ask", async (
     IRetrievalService retrievalService,
     ILlmService llmService,
@@ -369,16 +370,19 @@ app.MapGet("/ask", async (
             {
                 question,
                 answer = "I couldn't find any relevant information in the Stack Overflow database to answer your question.",
-                chunks = Array.Empty<object>()
+                citations = Array.Empty<object>()
             });
         }
 
-        // Step 2: Stream LLM response
+        // Step 2: Extract citations from chunks (3-5 unique sources)
+        var citations = CitationHelper.ExtractCitations(chunks, maxCitations: 5);
+
+        // Step 3: Stream LLM response with citations
         return Results.Stream(async responseStream =>
         {
             await using var writer = new StreamWriter(responseStream, leaveOpen: true);
 
-            // Write chunks metadata first (as JSON)
+            // Write metadata first
             await writer.WriteLineAsync($"data: {{\"type\":\"metadata\",\"question\":\"{question}\",\"chunkCount\":{chunks.Count},\"searchType\":\"{(useHybrid ? "hybrid" : "vector-only")}\"}}\n");
             await writer.FlushAsync();
 
@@ -389,6 +393,11 @@ app.MapGet("/ask", async (
                 await writer.WriteAsync($"data: {{\"type\":\"text\",\"content\":\"{chunk.Replace("\"", "\\\"").Replace("\n", "\\n")}\"}}\n\n");
                 await writer.FlushAsync();
             }
+
+            // Send citations after streaming completes
+            var citationsJson = System.Text.Json.JsonSerializer.Serialize(citations);
+            await writer.WriteLineAsync($"data: {{\"type\":\"citations\",\"sources\":{citationsJson}}}\n");
+            await writer.FlushAsync();
 
             // Send completion marker
             await writer.WriteLineAsync("data: {\"type\":\"done\"}\n");
@@ -404,7 +413,7 @@ app.MapGet("/ask", async (
     }
 })
 .WithName("Ask")
-.WithDescription("Full RAG pipeline: retrieves context and streams LLM answer (Story 2.3 test endpoint)")
+.WithDescription("Full RAG pipeline: retrieves context, streams LLM answer, and provides citations (Story 2.4)")
 .WithOpenApi();
 
 app.Run();
