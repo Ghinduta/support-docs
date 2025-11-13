@@ -132,9 +132,24 @@ builder.Services.Configure<RetrievalOptions>(
     builder.Configuration.GetSection(RetrievalOptions.SectionName));
 builder.Services.AddSingleton<IRetrievalService, RetrievalService>();
 
+// Configure and register LLM service
+builder.Services.Configure<LlmOptions>(
+    builder.Configuration.GetSection(LlmOptions.SectionName));
+
+if (openAiOptions != null && !string.IsNullOrWhiteSpace(openAiOptions.ApiKey))
+{
+    // Create a Kernel for chat completion (LLM service)
+    var llmKernelBuilder = Kernel.CreateBuilder();
+    llmKernelBuilder.AddOpenAIChatCompletion(
+        modelId: builder.Configuration.GetValue<string>("Llm:ModelName") ?? "gpt-4o-mini",
+        apiKey: openAiOptions.ApiKey);
+    var llmKernel = llmKernelBuilder.Build();
+
+    builder.Services.AddSingleton(llmKernel);
+    builder.Services.AddSingleton<ILlmService, LlmService>();
+}
+
 // TODO: Add remaining service registrations
-// builder.Services.AddSingleton<IRetrievalService, RetrievalService>();
-// builder.Services.AddSingleton<ILlmService, LlmService>();
 // builder.Services.AddSingleton<ITagSuggestionService, TagSuggestionService>();
 // builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
 // builder.Services.AddSingleton<ICacheService, CacheService>();
@@ -325,6 +340,71 @@ app.MapGet("/search", async (
 })
 .WithName("Search")
 .WithDescription("Test search endpoint - supports both vector-only and hybrid search")
+.WithOpenApi();
+
+// Ask endpoint - full RAG pipeline with streaming (Story 2.3 test endpoint)
+app.MapGet("/ask", async (
+    IRetrievalService retrievalService,
+    ILlmService llmService,
+    string question,
+    int topK = 5,
+    bool useHybrid = true,
+    CancellationToken cancellationToken = default) =>
+{
+    if (string.IsNullOrWhiteSpace(question))
+    {
+        return Results.BadRequest(new { error = "Question parameter is required" });
+    }
+
+    try
+    {
+        // Step 1: Retrieve relevant chunks
+        var chunks = useHybrid
+            ? await retrievalService.HybridSearchAsync(question, topK, useHybrid, cancellationToken)
+            : await retrievalService.SearchAsync(question, topK, cancellationToken);
+
+        if (chunks.Count == 0)
+        {
+            return Results.Ok(new
+            {
+                question,
+                answer = "I couldn't find any relevant information in the Stack Overflow database to answer your question.",
+                chunks = Array.Empty<object>()
+            });
+        }
+
+        // Step 2: Stream LLM response
+        return Results.Stream(async responseStream =>
+        {
+            await using var writer = new StreamWriter(responseStream, leaveOpen: true);
+
+            // Write chunks metadata first (as JSON)
+            await writer.WriteLineAsync($"data: {{\"type\":\"metadata\",\"question\":\"{question}\",\"chunkCount\":{chunks.Count},\"searchType\":\"{(useHybrid ? "hybrid" : "vector-only")}\"}}\n");
+            await writer.FlushAsync();
+
+            // Stream LLM response
+            await foreach (var chunk in llmService.StreamAnswerAsync(question, chunks, cancellationToken))
+            {
+                // SSE format: data: <content>\n\n
+                await writer.WriteAsync($"data: {{\"type\":\"text\",\"content\":\"{chunk.Replace("\"", "\\\"").Replace("\n", "\\n")}\"}}\n\n");
+                await writer.FlushAsync();
+            }
+
+            // Send completion marker
+            await writer.WriteLineAsync("data: {\"type\":\"done\"}\n");
+            await writer.FlushAsync();
+        }, "text/event-stream");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Ask failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+})
+.WithName("Ask")
+.WithDescription("Full RAG pipeline: retrieves context and streams LLM answer (Story 2.3 test endpoint)")
 .WithOpenApi();
 
 app.Run();
