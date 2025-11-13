@@ -504,7 +504,7 @@ app.MapPost("/ask", async (
         if (cachedResponse != null)
         {
             startTime.Stop();
-            // Cache hit - return cached response with metadata update
+            // Cache hit - return cached response with updated metadata
             return Results.Stream(async responseStream =>
             {
                 await using var writer = new StreamWriter(responseStream, leaveOpen: true);
@@ -513,16 +513,30 @@ app.MapPost("/ask", async (
                 await writer.WriteLineAsync($"data: {{\"type\":\"metadata\",\"question\":\"{request.Question}\",\"cacheHit\":true,\"latencyMs\":{startTime.ElapsedMilliseconds}}}\n");
                 await writer.FlushAsync();
 
-                // Stream cached content (skip first metadata line from cache)
+                // Stream cached content (skip first metadata line and final_metadata from cache)
                 var lines = cachedResponse.Split('\n').Skip(1);
                 foreach (var line in lines)
                 {
-                    if (!string.IsNullOrWhiteSpace(line))
+                    if (!string.IsNullOrWhiteSpace(line) && !line.Contains("\"type\":\"final_metadata\""))
                     {
                         await writer.WriteLineAsync(line);
                         await writer.FlushAsync();
                     }
                 }
+
+                // Send updated final_metadata with cache hit
+                var finalMetadata = new
+                {
+                    type = "final_metadata",
+                    latencyMs = startTime.ElapsedMilliseconds,
+                    tokensUsed = 0,
+                    estimatedCost = 0.0,
+                    cacheHit = true,
+                    retrievedChunks = 0
+                };
+                var finalMetadataJson = System.Text.Json.JsonSerializer.Serialize(finalMetadata);
+                await writer.WriteLineAsync($"data: {finalMetadataJson}\n");
+                await writer.FlushAsync();
             }, "text/event-stream");
         }
 
