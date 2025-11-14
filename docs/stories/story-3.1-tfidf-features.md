@@ -2,7 +2,7 @@
 
 **Epic:** 3 - Tag Suggestion & Observability
 **Story ID:** 3.1
-**Status:** Draft
+**Status:** Ready for Review
 **Assigned To:** Dev Agent
 **Story Points:** 3
 
@@ -29,27 +29,27 @@ so that **tag prediction has meaningful input features**.
 ## Tasks
 
 ### Task 1: Setup ML.NET
-- [ ] Add Microsoft.ML NuGet package
-- [ ] Create ML models folder structure
+- [x] Add Microsoft.ML NuGet package
+- [x] Create ML models folder structure
 
 ### Task 2: Create Tag Training Data Model
-- [ ] Create `TagTrainingData` class
-- [ ] Properties: Text (title+body), Tags (comma-separated)
+- [x] Create `TagTrainingData` class
+- [x] Properties: Text (title+body), Tags (comma-separated)
 
 ### Task 3: Implement TF-IDF Vectorizer
-- [ ] Create `ITfidfVectorizer` interface
-- [ ] Implement using ML.NET TextFeaturizingEstimator
-- [ ] Train on Stack Overflow data
-- [ ] Save fitted model
+- [x] Create `ITfidfVectorizer` interface
+- [x] Implement using ML.NET TextFeaturizingEstimator
+- [x] Train on Stack Overflow data
+- [x] Save fitted model
 
 ### Task 4: Implement Feature Extraction
-- [ ] Method: `ExtractFeatures(title, body)`
-- [ ] Return feature vector
+- [x] Method: `ExtractFeatures(title, body)`
+- [x] Return feature vector
 
 ### Task 5: Write Tests
-- [ ] Test feature extraction
-- [ ] Test vocabulary size reasonable
-- [ ] Test model serialization/loading
+- [x] Test feature extraction
+- [x] Test vocabulary size reasonable
+- [x] Test model serialization/loading
 
 ---
 
@@ -70,28 +70,41 @@ Use questions from ingested CSV to train TF-IDF vocabulary.
 ## Testing
 
 **Unit Tests:**
-- [ ] Extract features for sample question
-- [ ] Verify feature vector size
-- [ ] Test with empty input
+- [x] Extract features for sample question
+- [x] Verify feature vector size
+- [x] Test with empty input
 
 ---
 
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Agent updates this -->
+claude-sonnet-4-5-20250929
 
 ### Debug Log References
-<!-- Agent adds debug log references -->
+None
 
 ### Completion Notes
-<!-- Agent notes -->
+- Implemented TF-IDF vectorizer using ML.NET with n-gram (unigrams and bigrams) support
+- Pipeline includes: text normalization → tokenization → stop word removal → TF-IDF weighting
+- All 13 unit tests passing
+- Vocabulary size tested to be reasonable (10-10000 features for test dataset)
+- Model serialization/deserialization working correctly
 
 ### File List
-<!-- Agent lists files -->
+- src/StackOverflowRAG.ML/Models/TagTrainingData.cs (new)
+- src/StackOverflowRAG.ML/Interfaces/ITfidfVectorizer.cs (new)
+- src/StackOverflowRAG.ML/Services/TfidfVectorizer.cs (new)
+- src/StackOverflowRAG.Tests/ML/TfidfVectorizerTests.cs (new)
+- src/StackOverflowRAG.ML/StackOverflowRAG.ML.csproj (modified - added Microsoft.ML 5.0.0)
 
 ### Change Log
-<!-- Agent tracks changes -->
+- Added Microsoft.ML NuGet package (v5.0.0)
+- Created folder structure: Models, Interfaces, Services
+- Implemented TagTrainingData with LoadColumn attributes for CSV loading
+- Implemented ITfidfVectorizer interface with Train, ExtractFeatures, SaveModel, LoadModel methods
+- Implemented TfidfVectorizer service with ML.NET pipeline
+- Created comprehensive unit tests with 13 test cases covering all functionality
 
 ---
 
