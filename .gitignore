@@ -56,3 +56,8 @@ Thumbs.db
 # Docker volumes
 qdrant_storage/
 redis_data/
+
+# BMAD and documentation
+.bmad-core/
+.claude/
+docs/
