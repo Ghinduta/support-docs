@@ -126,8 +126,15 @@ else
     Console.WriteLine("WARNING: Qdrant configuration is missing or invalid. Vector database features will not be available.");
 }
 
-// Register ingestion service
-builder.Services.AddSingleton<IIngestionService, IngestionService>();
+// Register ingestion service (only if embedding service is available)
+if (openAiOptions != null && !string.IsNullOrWhiteSpace(openAiOptions.ApiKey))
+{
+    builder.Services.AddSingleton<IIngestionService, IngestionService>();
+}
+else
+{
+    Console.WriteLine("WARNING: OpenAI API key not configured. Ingestion and RAG features will not be available.");
+}
 
 // Configure and register retrieval service
 builder.Services.Configure<RetrievalOptions>(
@@ -172,8 +179,12 @@ else
     Console.WriteLine("WARNING: Redis is disabled or not configured. Caching features will not be available.");
 }
 
-// TODO: Add remaining service registrations
-// builder.Services.AddSingleton<ITagSuggestionService, TagSuggestionService>();
+// Register tag suggestion service
+builder.Services.Configure<TagSuggestionOptions>(
+    builder.Configuration.GetSection(TagSuggestionOptions.SectionName));
+builder.Services.AddSingleton<ITagSuggestionService, TagSuggestionService>();
+
+// TODO: Add telemetry service registration
 // builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
 
 var app = builder.Build();
@@ -202,14 +213,26 @@ app.MapGet("/health", () =>
 })
 .WithName("HealthCheck")
 .WithDescription("Health check endpoint to verify API is running")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Check API health status";
+    return operation;
+});
 
 // Ingestion endpoint
 app.MapPost("/ingest", async (
-    IIngestionService ingestionService,
+    IIngestionService? ingestionService,
     IngestionRequest? request,
     CancellationToken cancellationToken) =>
 {
+    if (ingestionService == null)
+    {
+        return Results.Problem(
+            title: "Ingestion not available",
+            detail: "Ingestion service requires OpenAI API key. Please configure OpenAI__ApiKey in .env file.",
+            statusCode: 503);
+    }
+
     try
     {
         var result = await ingestionService.IngestAsync(
@@ -234,7 +257,20 @@ app.MapPost("/ingest", async (
 })
 .WithName("Ingest")
 .WithDescription("Triggers full ingestion pipeline: CSV → Parse → Chunk → Embed → Upsert")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Ingest Stack Overflow data from CSV";
+    operation.RequestBody.Description = "Ingestion configuration";
+
+    var mediaType = operation.RequestBody.Content["application/json"];
+    mediaType.Example = new Microsoft.OpenApi.Any.OpenApiObject
+    {
+        ["csvPath"] = new Microsoft.OpenApi.Any.OpenApiString("data/stacksample.csv"),
+        ["maxRows"] = new Microsoft.OpenApi.Any.OpenApiInteger(10000)
+    };
+
+    return operation;
+});
 
 // Compare endpoint - shows hybrid vs vector-only side-by-side
 app.MapGet("/search/compare", async (
@@ -315,7 +351,19 @@ app.MapGet("/search/compare", async (
 })
 .WithName("CompareSearch")
 .WithDescription("Compare hybrid vs vector-only search side-by-side")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Compare hybrid and vector-only search results";
+
+    // Add parameter descriptions
+    operation.Parameters[0].Description = "Search query (e.g., 'How to sort a list in Python?')";
+    operation.Parameters[0].Example = new Microsoft.OpenApi.Any.OpenApiString("How to sort a list in Python?");
+
+    operation.Parameters[1].Description = "Number of results to return from each search method";
+    operation.Parameters[1].Example = new Microsoft.OpenApi.Any.OpenApiInteger(5);
+
+    return operation;
+});
 
 // Search endpoint (temporary for testing Story 2.2)
 app.MapGet("/search", async (
@@ -362,7 +410,22 @@ app.MapGet("/search", async (
 })
 .WithName("Search")
 .WithDescription("Test search endpoint - supports both vector-only and hybrid search")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Search Stack Overflow knowledge base";
+
+    // Add parameter descriptions
+    operation.Parameters[0].Description = "Search query (e.g., 'How to handle exceptions in C#?')";
+    operation.Parameters[0].Example = new Microsoft.OpenApi.Any.OpenApiString("How to handle exceptions in C#?");
+
+    operation.Parameters[1].Description = "Number of results to return (default: 5)";
+    operation.Parameters[1].Example = new Microsoft.OpenApi.Any.OpenApiInteger(5);
+
+    operation.Parameters[2].Description = "Use hybrid search (BM25 + vector) or vector-only (default: true)";
+    operation.Parameters[2].Example = new Microsoft.OpenApi.Any.OpenApiBoolean(true);
+
+    return operation;
+});
 
 // Ask endpoint - full RAG pipeline with streaming, caching, and citations (Story 2.5)
 app.MapGet("/ask", async (
@@ -472,7 +535,22 @@ app.MapGet("/ask", async (
 })
 .WithName("AskGet")
 .WithDescription("Full RAG pipeline: retrieves context, streams LLM answer with Redis caching, and provides citations (GET version)")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Ask a question (GET with streaming)";
+
+    // Add parameter descriptions
+    operation.Parameters[0].Description = "Question to ask (e.g., 'What is the best way to handle async/await in JavaScript?')";
+    operation.Parameters[0].Example = new Microsoft.OpenApi.Any.OpenApiString("What is the best way to handle async/await in JavaScript?");
+
+    operation.Parameters[1].Description = "Number of context chunks to retrieve (default: 5)";
+    operation.Parameters[1].Example = new Microsoft.OpenApi.Any.OpenApiInteger(5);
+
+    operation.Parameters[2].Description = "Use hybrid search for context retrieval (default: true)";
+    operation.Parameters[2].Example = new Microsoft.OpenApi.Any.OpenApiBoolean(true);
+
+    return operation;
+});
 
 // POST /ask - Main RAG endpoint with JSON body (Story 2.6)
 app.MapPost("/ask", async (
@@ -638,6 +716,149 @@ app.MapPost("/ask", async (
 })
 .WithName("Ask")
 .WithDescription("Full RAG pipeline with POST JSON body: retrieves context, streams LLM answer with caching, citations, and enhanced metadata (Story 2.6)")
-.WithOpenApi();
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Ask a question (POST with JSON body)";
+    operation.RequestBody.Description = "Question and search configuration";
+
+    var mediaType = operation.RequestBody.Content["application/json"];
+    mediaType.Example = new Microsoft.OpenApi.Any.OpenApiObject
+    {
+        ["question"] = new Microsoft.OpenApi.Any.OpenApiString("What is the best way to handle async/await in JavaScript?"),
+        ["topK"] = new Microsoft.OpenApi.Any.OpenApiInteger(5),
+        ["useHybrid"] = new Microsoft.OpenApi.Any.OpenApiBoolean(true)
+    };
+
+    return operation;
+});
+
+// POST /tags/suggest - Tag suggestion endpoint (Story 3.3)
+app.MapPost("/tags/suggest", async (
+    ITagSuggestionService tagSuggestionService,
+    TagSuggestionRequest request,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.Title) && string.IsNullOrWhiteSpace(request.Body))
+        {
+            return Results.BadRequest(new { error = "Either title or body must be provided" });
+        }
+
+        if (request.TopK < 1 || request.TopK > 10)
+        {
+            return Results.BadRequest(new { error = "TopK must be between 1 and 10" });
+        }
+
+        // Get tag suggestions
+        var response = await tagSuggestionService.SuggestTagsAsync(
+            request.Title,
+            request.Body,
+            request.TopK,
+            cancellationToken);
+
+        return Results.Ok(response);
+    }
+    catch (InvalidOperationException ex) when (ex.Message.Contains("not initialized"))
+    {
+        return Results.Problem(
+            title: "Tag suggestion service not available",
+            detail: "The tag classifier model is not loaded. Please ensure the model file exists and the service is initialized.",
+            statusCode: 503);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Tag suggestion failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+})
+.WithName("SuggestTags")
+.WithDescription("Suggests Stack Overflow tags for a question using ML.NET classifier (Story 3.3)")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Suggest tags for a Stack Overflow question";
+    operation.RequestBody.Description = "Question details for tag prediction";
+
+    // Add request example
+    var mediaType = operation.RequestBody.Content["application/json"];
+    mediaType.Example = new Microsoft.OpenApi.Any.OpenApiObject
+    {
+        ["title"] = new Microsoft.OpenApi.Any.OpenApiString("How to sort a list in Python?"),
+        ["body"] = new Microsoft.OpenApi.Any.OpenApiString("I have a list of numbers [3, 1, 4, 1, 5] and I want to sort them in ascending order. What's the best way to do this?"),
+        ["topK"] = new Microsoft.OpenApi.Any.OpenApiInteger(5)
+    };
+
+    return operation;
+});
+
+// POST /tags/train - Train tag classifier model
+app.MapPost("/tags/train", async (
+    ITagSuggestionService tagSuggestionService,
+    TagTrainingRequest request,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        Log.Information("Starting tag classifier training via API...");
+
+        var result = await tagSuggestionService.TrainModelAsync(request, cancellationToken);
+
+        if (result.Success)
+        {
+            return Results.Ok(result);
+        }
+        else
+        {
+            return Results.BadRequest(result);
+        }
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Tag classifier training failed");
+        return Results.Problem(
+            title: "Training failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+})
+.WithName("TrainTagClassifier")
+.WithDescription("Train a new tag classifier model from Stack Overflow CSV data")
+.WithOpenApi(operation =>
+{
+    operation.Summary = "Train tag classifier model";
+    operation.RequestBody.Description = "Training configuration and data source";
+
+    // Add request example
+    var mediaType = operation.RequestBody.Content["application/json"];
+    mediaType.Example = new Microsoft.OpenApi.Any.OpenApiObject
+    {
+        ["csvPath"] = new Microsoft.OpenApi.Any.OpenApiString("data/stacksample.csv"),
+        ["maxRows"] = new Microsoft.OpenApi.Any.OpenApiInteger(10000),
+        ["testSplitRatio"] = new Microsoft.OpenApi.Any.OpenApiDouble(0.2)
+    };
+
+    return operation;
+});
+
+// Initialize tag suggestion service on startup
+var tagService = app.Services.GetService<ITagSuggestionService>();
+if (tagService != null)
+{
+    try
+    {
+        await tagService.InitializeAsync();
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Failed to initialize tag suggestion service. Tag suggestion will not be available.");
+    }
+}
 
 app.Run();
