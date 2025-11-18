@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StackOverflowRAG.Data\StackOverflowRAG.Data.csproj" />
+    <ProjectReference Include="..\StackOverflowRAG.ML\StackOverflowRAG.ML.csproj" />
   </ItemGroup>
 
   <ItemGroup>

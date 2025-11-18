@@ -184,8 +184,8 @@ builder.Services.Configure<TagSuggestionOptions>(
     builder.Configuration.GetSection(TagSuggestionOptions.SectionName));
 builder.Services.AddSingleton<ITagSuggestionService, TagSuggestionService>();
 
-// TODO: Add telemetry service registration
-// builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
+// Register telemetry service
+builder.Services.AddSingleton<ITelemetryService, TelemetryService>();
 
 var app = builder.Build();
 
@@ -735,9 +735,12 @@ app.MapPost("/ask", async (
 // POST /tags/suggest - Tag suggestion endpoint (Story 3.3)
 app.MapPost("/tags/suggest", async (
     ITagSuggestionService tagSuggestionService,
+    ITelemetryService? telemetryService,
     TagSuggestionRequest request,
     CancellationToken cancellationToken) =>
 {
+    var startTime = System.Diagnostics.Stopwatch.StartNew();
+
     try
     {
         // Validate input
@@ -757,6 +760,21 @@ app.MapPost("/tags/suggest", async (
             request.Body,
             request.TopK,
             cancellationToken);
+
+        // Log telemetry
+        startTime.Stop();
+        if (telemetryService != null)
+        {
+            var inputText = $"{request.Title} {request.Body}";
+            telemetryService.LogTagMetrics(new TagMetadata
+            {
+                InputLength = inputText.Length,
+                PredictedTags = response.SuggestedTags,
+                LatencyMs = startTime.ElapsedMilliseconds,
+                TopK = request.TopK,
+                ModelLoaded = true
+            });
+        }
 
         return Results.Ok(response);
     }

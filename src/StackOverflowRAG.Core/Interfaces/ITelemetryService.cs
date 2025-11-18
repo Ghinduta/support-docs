@@ -1,3 +1,5 @@
+using StackOverflowRAG.Core.Models;
+
 namespace StackOverflowRAG.Core.Interfaces;
 
 /// <summary>
@@ -5,7 +7,18 @@ namespace StackOverflowRAG.Core.Interfaces;
 /// </summary>
 public interface ITelemetryService
 {
-    // TODO: Implement in Story 3.4
-    // void LogQueryMetrics(QueryMetadata metadata);
-    // void LogIngestionMetrics(IngestionMetadata metadata);
+    /// <summary>
+    /// Log metrics for query/ask endpoint
+    /// </summary>
+    void LogQueryMetrics(QueryMetadata metadata);
+
+    /// <summary>
+    /// Log metrics for ingestion endpoint
+    /// </summary>
+    void LogIngestionMetrics(IngestionMetadata metadata);
+
+    /// <summary>
+    /// Log metrics for tag suggestion endpoint
+    /// </summary>
+    void LogTagMetrics(TagMetadata metadata);
 }
