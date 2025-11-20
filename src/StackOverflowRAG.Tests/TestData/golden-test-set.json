@@ -1,0 +1,107 @@
+[
+  {
+    "id": 1,
+    "questionText": "How to use async await in C#?",
+    "expectedPostIds": [],
+    "tags": ["c#", "async-await", ".net"],
+    "notes": "Common C# async/await question"
+  },
+  {
+    "id": 2,
+    "questionText": "What is the difference between String and StringBuilder in Java?",
+    "expectedPostIds": [],
+    "tags": ["java", "string", "stringbuilder"],
+    "notes": "Classic Java string handling question"
+  },
+  {
+    "id": 3,
+    "questionText": "How to sort a list in Python?",
+    "expectedPostIds": [],
+    "tags": ["python", "list", "sorting"],
+    "notes": "Python list sorting"
+  },
+  {
+    "id": 4,
+    "questionText": "How to handle exceptions in JavaScript promises?",
+    "expectedPostIds": [],
+    "tags": ["javascript", "promise", "exception-handling"],
+    "notes": "JavaScript async error handling"
+  },
+  {
+    "id": 5,
+    "questionText": "What is dependency injection and how does it work?",
+    "expectedPostIds": [],
+    "tags": ["dependency-injection", "design-patterns"],
+    "notes": "DI concept question"
+  },
+  {
+    "id": 6,
+    "questionText": "How to connect to a database using Entity Framework?",
+    "expectedPostIds": [],
+    "tags": ["c#", "entity-framework", "database"],
+    "notes": "EF connection setup"
+  },
+  {
+    "id": 7,
+    "questionText": "What is the difference between var and let in JavaScript?",
+    "expectedPostIds": [],
+    "tags": ["javascript", "variables", "scope"],
+    "notes": "JavaScript variable scoping"
+  },
+  {
+    "id": 8,
+    "questionText": "How to implement a REST API in Node.js?",
+    "expectedPostIds": [],
+    "tags": ["node.js", "rest", "api"],
+    "notes": "Node.js REST API basics"
+  },
+  {
+    "id": 9,
+    "questionText": "What is LINQ and how to use it in C#?",
+    "expectedPostIds": [],
+    "tags": ["c#", "linq", ".net"],
+    "notes": "LINQ fundamentals"
+  },
+  {
+    "id": 10,
+    "questionText": "How to prevent SQL injection attacks?",
+    "expectedPostIds": [],
+    "tags": ["sql", "security", "sql-injection"],
+    "notes": "SQL security best practices"
+  },
+  {
+    "id": 11,
+    "questionText": "What is the difference between HTTP GET and POST?",
+    "expectedPostIds": [],
+    "tags": ["http", "rest", "web"],
+    "notes": "HTTP methods comparison"
+  },
+  {
+    "id": 12,
+    "questionText": "How to parse JSON in Python?",
+    "expectedPostIds": [],
+    "tags": ["python", "json", "parsing"],
+    "notes": "Python JSON handling"
+  },
+  {
+    "id": 13,
+    "questionText": "What is a lambda expression in C#?",
+    "expectedPostIds": [],
+    "tags": ["c#", "lambda", "functional-programming"],
+    "notes": "C# lambda basics"
+  },
+  {
+    "id": 14,
+    "questionText": "How to create a class in Python?",
+    "expectedPostIds": [],
+    "tags": ["python", "class", "oop"],
+    "notes": "Python OOP basics"
+  },
+  {
+    "id": 15,
+    "questionText": "What is Git and how to use it for version control?",
+    "expectedPostIds": [],
+    "tags": ["git", "version-control"],
+    "notes": "Git fundamentals"
+  }
+]

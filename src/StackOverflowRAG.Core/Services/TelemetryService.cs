@@ -23,7 +23,7 @@ public class TelemetryService : ITelemetryService
         };
     }
 
-    public void LogQueryMetrics(QueryMetadata metadata)
+    public void LogQueryMetrics(QueryTelemetry metadata)
     {
         _logger.LogInformation(
             "QueryCompleted: {EventType} | Question: {Question} | Latency: {LatencyMs}ms | Tokens: {TokensInput}/{TokensOutput} | Cost: ${EstimatedCost:F6} | Cache: {CacheHit} | Chunks: {RetrievedChunks} | Search: {SearchType}",

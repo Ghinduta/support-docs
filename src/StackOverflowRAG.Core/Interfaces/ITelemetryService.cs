@@ -10,7 +10,7 @@ public interface ITelemetryService
     /// <summary>
     /// Log metrics for query/ask endpoint
     /// </summary>
-    void LogQueryMetrics(QueryMetadata metadata);
+    void LogQueryMetrics(QueryTelemetry metadata);
 
     /// <summary>
     /// Log metrics for ingestion endpoint

@@ -27,9 +27,11 @@
 .env.*.local
 
 # Data files
-data/*.csv
-data/*.json
-!data/.gitkeep
+data/
+train-sample-model.csv
+
+# Training files
+TrainTagModel.cs
 
 # Logs
 logs/

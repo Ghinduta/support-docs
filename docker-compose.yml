@@ -18,7 +18,7 @@ services:
       - Qdrant__Host=http://qdrant:6333
       - Qdrant__CollectionName=${Qdrant__CollectionName:-stackoverflow_chunks}
       # Ingestion Configuration
-      - Ingestion__CsvPath=/data/stacksample.csv
+      - Ingestion__CsvPath=/data/stacksample
       - Ingestion__MaxRows=${Ingestion__MaxRows:-10000}
       - Ingestion__ChunkSize=${Ingestion__ChunkSize:-500}
       - Ingestion__ChunkOverlap=${Ingestion__ChunkOverlap:-50}

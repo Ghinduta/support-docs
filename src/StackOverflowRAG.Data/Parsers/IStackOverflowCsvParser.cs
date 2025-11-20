@@ -10,7 +10,7 @@ public interface IStackOverflowCsvParser
     /// <summary>
     /// Parses Stack Overflow CSV file and returns documents.
     /// </summary>
-    /// <param name="csvPath">Path to the CSV file</param>
+    /// <param name="csvPath">Path to data/stacksample.csvthe CSV file</param>
     /// <param name="maxRows">Maximum number of rows to parse (default: 10000)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of parsed Stack Overflow documents</returns>

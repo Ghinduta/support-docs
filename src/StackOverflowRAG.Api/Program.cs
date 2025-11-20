@@ -265,7 +265,7 @@ app.MapPost("/ingest", async (
     var mediaType = operation.RequestBody.Content["application/json"];
     mediaType.Example = new Microsoft.OpenApi.Any.OpenApiObject
     {
-        ["csvPath"] = new Microsoft.OpenApi.Any.OpenApiString("data/stacksample.csv"),
+        ["csvPath"] = new Microsoft.OpenApi.Any.OpenApiString("data/stacksample"),
         ["maxRows"] = new Microsoft.OpenApi.Any.OpenApiInteger(10000)
     };
 
@@ -769,7 +769,7 @@ app.MapPost("/tags/suggest", async (
             telemetryService.LogTagMetrics(new TagMetadata
             {
                 InputLength = inputText.Length,
-                PredictedTags = response.SuggestedTags,
+                PredictedTags = response.Tags,
                 LatencyMs = startTime.ElapsedMilliseconds,
                 TopK = request.TopK,
                 ModelLoaded = true
@@ -857,7 +857,7 @@ app.MapPost("/tags/train", async (
     var mediaType = operation.RequestBody.Content["application/json"];
     mediaType.Example = new Microsoft.OpenApi.Any.OpenApiObject
     {
-        ["csvPath"] = new Microsoft.OpenApi.Any.OpenApiString("data/stacksample.csv"),
+        ["csvPath"] = new Microsoft.OpenApi.Any.OpenApiString("data/stacksamples"),
         ["maxRows"] = new Microsoft.OpenApi.Any.OpenApiInteger(10000),
         ["testSplitRatio"] = new Microsoft.OpenApi.Any.OpenApiDouble(0.2)
     };
