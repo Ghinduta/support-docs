@@ -365,6 +365,7 @@ app.MapGet("/search/compare", async (
     return operation;
 });
 
+
 // Search endpoint (temporary for testing Story 2.2)
 app.MapGet("/search", async (
     IRetrievalService retrievalService,
