@@ -139,16 +139,8 @@ public class RetrievalService : IRetrievalService
 
             if (useHybrid)
             {
-                _logger.LogDebug("Performing hybrid search with weights: Vector={VectorWeight}, Keyword={KeywordWeight}",
-                    _options.VectorWeight, _options.KeywordWeight);
-
-                searchResults = await _vectorStore.HybridSearchAsync(
-                    queryEmbedding,
-                    query,
-                    topK,
-                    _options.VectorWeight,
-                    _options.KeywordWeight,
-                    cancellationToken);
+                _logger.LogDebug("Performing hybrid search (vector + BM25, RRF)");
+                searchResults = await _vectorStore.HybridSearchAsync(queryEmbedding, query, topK, cancellationToken);
             }
             else
             {
@@ -193,5 +185,56 @@ public class RetrievalService : IRetrievalService
                 query.Substring(0, Math.Min(100, query.Length)));
             throw;
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<List<DocumentChunk>> MultiQuerySearchAsync(
+        IReadOnlyList<string> queries,
+        int topK,
+        bool useHybrid,
+        CancellationToken cancellationToken = default)
+    {
+        // Each phrasing fetches a deeper list so chunks ranked a little lower by one phrasing can still win overall.
+        var resultLists = await Task.WhenAll(
+            queries.Select(q => HybridSearchAsync(q, topK * 2, useHybrid, cancellationToken)));
+
+        var merged = FuseWithRrf(resultLists).Take(topK).ToList();
+
+        _logger.LogInformation(
+            "Multi-query search: {QueryCount} queries, {Unique} unique chunks, returning {Count}",
+            queries.Count, resultLists.SelectMany(l => l).Select(c => c.ChunkId).Distinct().Count(), merged.Count);
+
+        return merged;
+    }
+
+    // Standard RRF constant: dampens the gap between rank 1 and rank 2 so no single list dominates.
+    private const int RrfK = 60;
+
+    /// <summary>
+    /// Reciprocal Rank Fusion: each chunk scores 1 / (60 + rank) in every list it appears in; scores are summed.
+    /// </summary>
+    public static List<DocumentChunk> FuseWithRrf(IEnumerable<List<DocumentChunk>> rankedLists)
+    {
+        var fused = new Dictionary<string, (DocumentChunk Chunk, double Score)>();
+        foreach (var list in rankedLists)
+        {
+            for (var rank = 0; rank < list.Count; rank++)
+            {
+                var chunk = list[rank];
+                var score = 1.0 / (RrfK + rank + 1);
+                fused[chunk.ChunkId] = fused.TryGetValue(chunk.ChunkId, out var existing)
+                    ? (existing.Chunk, existing.Score + score)
+                    : (chunk, score);
+            }
+        }
+
+        return fused.Values
+            .OrderByDescending(v => v.Score)
+            .Select(v =>
+            {
+                v.Chunk.Score = (float)v.Score;
+                return v.Chunk;
+            })
+            .ToList();
     }
 }

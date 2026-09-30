@@ -9,7 +9,12 @@ namespace StackOverflowRAG.Core.Interfaces;
 public interface IIngestionService
 {
     /// <summary>
-    /// Executes full ingestion pipeline.
+    /// Snapshot of the current (or last) ingestion's progress.
+    /// </summary>
+    IngestionProgress GetProgress();
+
+    /// <summary>
+    /// Executes full ingestion pipeline. Throws <see cref="InvalidOperationException"/> if one is already running.
     /// </summary>
     /// <param name="csvPath">Path to CSV file (optional, uses config if not provided)</param>
     /// <param name="maxRows">Maximum rows to process (optional, uses config if not provided)</param>

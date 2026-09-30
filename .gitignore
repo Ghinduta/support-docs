@@ -27,7 +27,7 @@
 .env.*.local
 
 # Data files
-data/
+/data/
 train-sample-model.csv
 
 # Training files
@@ -62,4 +62,3 @@ redis_data/
 # BMAD and documentation
 .bmad-core/
 .claude/
-docs/

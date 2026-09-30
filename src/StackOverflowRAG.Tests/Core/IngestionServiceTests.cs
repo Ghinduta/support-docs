@@ -79,7 +79,7 @@ public class IngestionServiceTests
         _mockChunkingService.Setup(x => x.ChunkDocuments(It.IsAny<List<StackOverflowDocument>>(), It.IsAny<int>(), It.IsAny<int>()))
             .Returns(chunks);
 
-        _mockEmbeddingService.Setup(x => x.GenerateChunkEmbeddingsAsync(It.IsAny<List<DocumentChunk>>(), It.IsAny<CancellationToken>()))
+        _mockEmbeddingService.Setup(x => x.GenerateChunkEmbeddingsAsync(It.IsAny<List<DocumentChunk>>(), It.IsAny<IProgress<int>?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _mockVectorStore.Setup(x => x.UpsertChunksAsync(It.IsAny<List<DocumentChunk>>(), It.IsAny<CancellationToken>()))

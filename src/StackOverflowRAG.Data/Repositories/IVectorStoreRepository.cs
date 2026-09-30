@@ -32,25 +32,31 @@ public interface IVectorStoreRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Performs hybrid search combining vector similarity and keyword matching.
+    /// Performs hybrid search: vector similarity and BM25 keyword search, merged with Reciprocal Rank Fusion.
     /// </summary>
     /// <param name="queryEmbedding">Query embedding vector</param>
-    /// <param name="queryText">Query text for keyword matching</param>
+    /// <param name="queryText">Query text for BM25 keyword search</param>
     /// <param name="limit">Maximum number of results</param>
-    /// <param name="vectorWeight">Weight for vector score (0.0 to 1.0)</param>
-    /// <param name="keywordWeight">Weight for keyword score (0.0 to 1.0)</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>List of matching chunks with combined scores</returns>
+    /// <returns>List of matching chunks with RRF scores</returns>
     Task<List<(DocumentChunk Chunk, float Score)>> HybridSearchAsync(
         float[] queryEmbedding,
         string queryText,
         int limit = 10,
-        double vectorWeight = 0.5,
-        double keywordWeight = 0.5,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets count of chunks in collection.
     /// </summary>
     Task<long> GetCountAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the first chunk (chunk_index 0) of up to <paramref name="limit"/> posts, in stable point-ID order.
+    /// </summary>
+    Task<List<DocumentChunk>> GetFirstChunksAsync(int limit, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all chunks of one post, ordered by chunk index.
+    /// </summary>
+    Task<List<DocumentChunk>> GetChunksForPostAsync(int postId, CancellationToken cancellationToken = default);
 }

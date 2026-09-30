@@ -1,7 +1,11 @@
+using System.Security.Cryptography;
+using System.Text;
+using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using StackOverflowRAG.Data.Models;
+using StackOverflowRAG.Data.Utilities;
 
 namespace StackOverflowRAG.Data.Repositories;
 
@@ -14,6 +18,8 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
     private readonly string _collectionName;
     private readonly ILogger<QdrantVectorStoreRepository> _logger;
     private const int VectorSize = 1536; // text-embedding-3-small dimension
+    private const string DenseVectorName = "dense";
+    private const string Bm25VectorName = "bm25";
 
     public QdrantVectorStoreRepository(
         QdrantClient client,
@@ -38,24 +44,21 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
             {
                 _logger.LogInformation("Creating Qdrant collection: {CollectionName}", _collectionName);
 
+                // Two vectors per chunk: the OpenAI embedding (meaning) and a BM25 sparse vector (keywords).
+                // The IDF modifier makes Qdrant weight rare words higher, which completes BM25 scoring.
                 await _client.CreateCollectionAsync(
                     collectionName: _collectionName,
-                    vectorsConfig: new VectorParams
+                    vectorsConfig: new VectorParamsMap
                     {
-                        Size = VectorSize,
-                        Distance = Distance.Cosine
+                        Map = { [DenseVectorName] = new VectorParams { Size = VectorSize, Distance = Distance.Cosine } }
+                    },
+                    sparseVectorsConfig: new SparseVectorConfig
+                    {
+                        Map = { [Bm25VectorName] = new SparseVectorParams { Modifier = Modifier.Idf } }
                     },
                     cancellationToken: cancellationToken);
 
-                // Enable full-text search on chunk_text field for hybrid search
-                _logger.LogInformation("Creating text index on chunk_text field");
-                await _client.CreatePayloadIndexAsync(
-                    collectionName: _collectionName,
-                    fieldName: "chunk_text",
-                    schemaType: PayloadSchemaType.Text,
-                    cancellationToken: cancellationToken);
-
-                _logger.LogInformation("Collection {CollectionName} created successfully with text indexing", _collectionName);
+                _logger.LogInformation("Collection {CollectionName} created with dense and BM25 vectors", _collectionName);
             }
             else
             {
@@ -91,10 +94,17 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
 
         try
         {
-            var points = validChunks.Select(chunk => new PointStruct
+            var points = validChunks.Select(chunk =>
             {
-                Id = new PointId { Uuid = Guid.NewGuid().ToString() },
-                Vectors = chunk.Embedding!,
+                var (indices, values) = Bm25.EncodeDocument(chunk.ChunkText);
+                return new PointStruct
+            {
+                Id = new PointId { Uuid = PointIdFor(chunk.ChunkId).ToString() },
+                Vectors = new Dictionary<string, Vector>
+                {
+                    [DenseVectorName] = chunk.Embedding!,
+                    [Bm25VectorName] = (values, indices)
+                },
                 Payload =
                 {
                     ["chunk_id"] = chunk.ChunkId,
@@ -103,6 +113,7 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
                     ["chunk_text"] = chunk.ChunkText,
                     ["chunk_index"] = chunk.ChunkIndex
                 }
+            };
             }).ToList();
 
             await _client.UpsertAsync(
@@ -134,25 +145,17 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
 
         try
         {
-            var searchResult = await _client.SearchAsync(
+            var searchResult = await _client.QueryAsync(
                 collectionName: _collectionName,
-                vector: queryEmbedding,
+                query: queryEmbedding,
+                usingVector: DenseVectorName,
                 limit: (ulong)limit,
+                payloadSelector: true,
                 cancellationToken: cancellationToken);
 
-            var results = searchResult.Select(point =>
-            {
-                var chunk = new DocumentChunk
-                {
-                    ChunkId = point.Payload["chunk_id"].StringValue,
-                    PostId = (int)point.Payload["post_id"].IntegerValue,
-                    QuestionTitle = point.Payload["question_title"].StringValue,
-                    ChunkText = point.Payload["chunk_text"].StringValue,
-                    ChunkIndex = (int)point.Payload["chunk_index"].IntegerValue
-                };
-
-                return (Chunk: chunk, Score: point.Score);
-            }).ToList();
+            var results = searchResult
+                .Select(point => (Chunk: ToChunk(point.Payload), Score: point.Score))
+                .ToList();
 
             _logger.LogInformation("Found {Count} matching chunks", results.Count);
 
@@ -170,8 +173,6 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
         float[] queryEmbedding,
         string queryText,
         int limit = 10,
-        double vectorWeight = 0.5,
-        double keywordWeight = 0.5,
         CancellationToken cancellationToken = default)
     {
         if (queryEmbedding == null || queryEmbedding.Length == 0)
@@ -184,92 +185,37 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
             throw new ArgumentException("Query text cannot be null or empty", nameof(queryText));
         }
 
+        // Each search fetches a deeper candidate list than the final limit, so RRF has overlap to work with.
+        var candidates = (ulong)Math.Max(limit * 4, 20);
+        var prefetch = new List<PrefetchQuery>
+        {
+            new() { Query = queryEmbedding, Using = DenseVectorName, Limit = candidates }
+        };
+
+        var (indices, values) = Bm25.EncodeQuery(queryText);
+        if (indices.Length > 0)
+        {
+            prefetch.Add(new() { Query = (values, indices), Using = Bm25VectorName, Limit = candidates });
+        }
+
         _logger.LogInformation(
-            "Performing hybrid search: Limit={Limit}, VectorWeight={VectorWeight}, KeywordWeight={KeywordWeight}",
-            limit, vectorWeight, keywordWeight);
+            "Performing hybrid search (vector + BM25, fused with RRF): Limit={Limit}, QueryWords={WordCount}",
+            limit, indices.Length);
 
         try
         {
-            // Perform vector search
-            var vectorResults = await SearchAsync(queryEmbedding, limit * 2, cancellationToken);
-            _logger.LogDebug("Vector search returned {Count} results", vectorResults.Count);
-
-            // Perform keyword search using Qdrant's full-text search
-            var keywordFilter = new Filter
-            {
-                Must =
-                {
-                    new Condition
-                    {
-                        Field = new FieldCondition
-                        {
-                            Key = "chunk_text",
-                            Match = new Match { Text = queryText }
-                        }
-                    }
-                }
-            };
-
-            var keywordSearchResult = await _client.ScrollAsync(
+            var points = await _client.QueryAsync(
                 collectionName: _collectionName,
-                filter: keywordFilter,
-                limit: (uint)Math.Min(limit * 2, 100),
+                query: Fusion.Rrf,
+                prefetch: prefetch,
+                limit: (ulong)limit,
+                payloadSelector: true,
                 cancellationToken: cancellationToken);
 
-            _logger.LogDebug("Keyword search returned {Count} results", keywordSearchResult.Result.Count);
+            var results = points.Select(point => (Chunk: ToChunk(point.Payload), Score: point.Score)).ToList();
 
-            // Create a dictionary to combine scores
-            var combinedScores = new Dictionary<string, (DocumentChunk Chunk, float VectorScore, float KeywordScore)>();
-
-            // Add vector search results
-            foreach (var (chunk, score) in vectorResults)
-            {
-                combinedScores[chunk.ChunkId] = (chunk, score, 0f);
-            }
-
-            // Add keyword search results and combine scores
-            foreach (var point in keywordSearchResult.Result)
-            {
-                var chunkId = point.Payload["chunk_id"].StringValue;
-
-                if (combinedScores.ContainsKey(chunkId))
-                {
-                    var existing = combinedScores[chunkId];
-                    combinedScores[chunkId] = (existing.Chunk, existing.VectorScore, 1.0f); // Keyword match = 1.0
-                }
-                else
-                {
-                    // Create chunk from keyword-only result
-                    var chunk = new DocumentChunk
-                    {
-                        ChunkId = chunkId,
-                        PostId = (int)point.Payload["post_id"].IntegerValue,
-                        QuestionTitle = point.Payload["question_title"].StringValue,
-                        ChunkText = point.Payload["chunk_text"].StringValue,
-                        ChunkIndex = (int)point.Payload["chunk_index"].IntegerValue
-                    };
-                    combinedScores[chunkId] = (chunk, 0f, 1.0f); // Keyword-only match
-                }
-            }
-
-            // Calculate combined scores and sort
-            var hybridResults = combinedScores
-                .Select(kvp =>
-                {
-                    var (chunk, vectorScore, keywordScore) = kvp.Value;
-                    var combinedScore = (float)((vectorWeight * vectorScore) + (keywordWeight * keywordScore));
-                    return (Chunk: chunk, Score: combinedScore);
-                })
-                .OrderByDescending(r => r.Score)
-                .Take(limit)
-                .ToList();
-
-            _logger.LogInformation(
-                "Hybrid search completed: {Count} results, Top score: {TopScore:F4}",
-                hybridResults.Count,
-                hybridResults.FirstOrDefault().Score);
-
-            return hybridResults;
+            _logger.LogInformation("Hybrid search completed: {Count} results", results.Count);
+            return results;
         }
         catch (Exception ex)
         {
@@ -279,10 +225,64 @@ public class QdrantVectorStoreRepository : IVectorStoreRepository
     }
 
     /// <inheritdoc />
+    /// <inheritdoc />
+    public async Task<List<DocumentChunk>> GetFirstChunksAsync(int limit, CancellationToken cancellationToken = default)
+    {
+        var response = await _client.ScrollAsync(
+            collectionName: _collectionName,
+            filter: MatchInteger("chunk_index", 0),
+            limit: (uint)limit,
+            cancellationToken: cancellationToken);
+
+        return response.Result.Select(point => ToChunk(point.Payload)).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<List<DocumentChunk>> GetChunksForPostAsync(int postId, CancellationToken cancellationToken = default)
+    {
+        var response = await _client.ScrollAsync(
+            collectionName: _collectionName,
+            filter: MatchInteger("post_id", postId),
+            limit: 100,
+            cancellationToken: cancellationToken);
+
+        return response.Result
+            .Select(point => ToChunk(point.Payload))
+            .OrderBy(chunk => chunk.ChunkIndex)
+            .ToList();
+    }
+
+    private static Filter MatchInteger(string key, long value) => new()
+    {
+        Must = { new Condition { Field = new FieldCondition { Key = key, Match = new Match { Integer = value } } } }
+    };
+
+    private static DocumentChunk ToChunk(MapField<string, Value> payload) => new()
+    {
+        ChunkId = payload["chunk_id"].StringValue,
+        PostId = (int)payload["post_id"].IntegerValue,
+        QuestionTitle = payload["question_title"].StringValue,
+        ChunkText = payload["chunk_text"].StringValue,
+        ChunkIndex = (int)payload["chunk_index"].IntegerValue
+    };
+
+    /// <summary>
+    /// Qdrant point IDs must be UUIDs or integers, so the ChunkId is hashed into a stable UUID.
+    /// The same chunk always maps to the same point, which makes re-ingestion overwrite instead of duplicate.
+    /// </summary>
+    public static Guid PointIdFor(string chunkId) => new(MD5.HashData(Encoding.UTF8.GetBytes(chunkId)));
+
     public async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            // Before the first ingestion the collection doesn't exist yet, which means zero chunks.
+            var collections = await _client.ListCollectionsAsync(cancellationToken);
+            if (!collections.Contains(_collectionName))
+            {
+                return 0;
+            }
+
             var info = await _client.GetCollectionInfoAsync(_collectionName, cancellationToken);
             return (long)info.PointsCount;
         }

@@ -52,7 +52,7 @@ public class ChunkingService : IChunkingService
 
         foreach (var sentence in sentences)
         {
-            var sentenceTokens = TokenCounter.EstimateTokenCount(sentence);
+            var sentenceTokens = TokenCounter.CountTokens(sentence);
 
             // If adding this sentence exceeds chunk size and we have content, create chunk
             if (currentTokenCount + sentenceTokens > chunkSize && currentChunkSentences.Count > 0)
@@ -68,7 +68,7 @@ public class ChunkingService : IChunkingService
                 if (!string.IsNullOrEmpty(overlapText))
                 {
                     currentChunkSentences = new List<string> { overlapText };
-                    currentTokenCount = TokenCounter.EstimateTokenCount(overlapText);
+                    currentTokenCount = TokenCounter.CountTokens(overlapText);
                 }
                 else
                 {
@@ -94,7 +94,7 @@ public class ChunkingService : IChunkingService
             "Chunked document PostId={PostId} into {ChunkCount} chunks (avg {AvgTokens} tokens/chunk)",
             document.PostId,
             chunks.Count,
-            chunks.Count > 0 ? chunks.Average(c => TokenCounter.EstimateTokenCount(c.ChunkText)) : 0);
+            chunks.Count > 0 ? chunks.Average(c => TokenCounter.CountTokens(c.ChunkText)) : 0);
 
         return chunks;
     }
@@ -154,14 +154,7 @@ public class ChunkingService : IChunkingService
             return string.Empty;
         }
 
-        var estimatedChars = overlapTokens * 4; // ~4 chars per token
-        if (text.Length <= estimatedChars)
-        {
-            return text;
-        }
-
-        // Take last N characters (approximate)
-        var overlapText = text.Substring(text.Length - estimatedChars);
+        var overlapText = TokenCounter.TakeLastTokens(text, overlapTokens);
 
         // Try to start at a word boundary
         var firstSpace = overlapText.IndexOf(' ');

@@ -146,4 +146,15 @@ public class CacheKeyHelperTests
         // Assert - all keys should be identical
         Assert.True(keys.All(k => k == keys[0]));
     }
+
+    [Fact]
+    public void GenerateResponseKey_WithMultiQuery_ReturnsDifferentKeyAndKeepsOldKeyWhenOff()
+    {
+        var withoutFlag = CacheKeyHelper.GenerateResponseKey("q", 5, false);
+        var off = CacheKeyHelper.GenerateResponseKey("q", 5, false, useMultiQuery: false);
+        var on = CacheKeyHelper.GenerateResponseKey("q", 5, false, useMultiQuery: true);
+
+        Assert.Equal(withoutFlag, off);
+        Assert.NotEqual(off, on);
+    }
 }

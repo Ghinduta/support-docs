@@ -198,8 +198,6 @@ public class RetrievalServiceTests
                 queryEmbedding,
                 query,
                 topK,
-                It.IsAny<double>(),
-                It.IsAny<double>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockResults);
 
@@ -211,7 +209,7 @@ public class RetrievalServiceTests
         Assert.Single(results);
         Assert.Equal(0.95f, results[0].Score);
         _mockVectorStore.Verify(
-            x => x.HybridSearchAsync(queryEmbedding, query, topK, It.IsAny<double>(), It.IsAny<double>(), It.IsAny<CancellationToken>()),
+            x => x.HybridSearchAsync(queryEmbedding, query, topK, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -247,7 +245,7 @@ public class RetrievalServiceTests
             x => x.SearchAsync(queryEmbedding, topK, It.IsAny<CancellationToken>()),
             Times.Once);
         _mockVectorStore.Verify(
-            x => x.HybridSearchAsync(It.IsAny<float[]>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<double>(), It.IsAny<double>(), It.IsAny<CancellationToken>()),
+            x => x.HybridSearchAsync(It.IsAny<float[]>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

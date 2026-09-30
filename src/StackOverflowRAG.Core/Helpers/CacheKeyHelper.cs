@@ -25,10 +25,12 @@ public static class CacheKeyHelper
     /// <param name="query">The query text</param>
     /// <param name="topK">Number of chunks retrieved</param>
     /// <param name="useHybrid">Whether hybrid search was used</param>
+    /// <param name="useMultiQuery">Whether multi-query search was used</param>
     /// <returns>Cache key in format: resp:{hash}</returns>
-    public static string GenerateResponseKey(string query, int topK, bool useHybrid)
+    public static string GenerateResponseKey(string query, int topK, bool useHybrid, bool useMultiQuery = false)
     {
-        var input = $"{query}|{topK}|{useHybrid}";
+        // Multi-query only appends to the key, so existing cached answers keep their keys.
+        var input = useMultiQuery ? $"{query}|{topK}|{useHybrid}|mq" : $"{query}|{topK}|{useHybrid}";
         var hash = ComputeMD5Hash(input);
         return $"resp:{hash}";
     }

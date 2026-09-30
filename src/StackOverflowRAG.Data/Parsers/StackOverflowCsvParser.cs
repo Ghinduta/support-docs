@@ -113,12 +113,15 @@ public class StackOverflowCsvParser : IStackOverflowCsvParser
         var questions = await LoadQuestionsAsync(questionsPath, maxRows, cancellationToken);
         _logger.LogInformation("Loaded {Count} questions", questions.Count);
 
+        // Answers.csv and Tags.csv cover the whole dataset; keep only rows for the questions just loaded.
+        var questionIds = questions.Select(q => q.Id).ToHashSet();
+
         _logger.LogInformation("Loading Answers.csv");
-        var answers = await LoadAnswersAsync(answersPath, cancellationToken);
+        var answers = await LoadAnswersAsync(answersPath, questionIds, cancellationToken);
         _logger.LogInformation("Loaded {Count} answers", answers.Count);
 
         _logger.LogInformation("Loading Tags.csv");
-        var tags = await LoadTagsAsync(tagsPath, cancellationToken);
+        var tags = await LoadTagsAsync(tagsPath, questionIds, cancellationToken);
         _logger.LogInformation("Loaded {Count} tag entries", tags.Count);
 
         _logger.LogInformation("Joining data: {QuestionCount} questions, {AnswerCount} answers, {TagCount} tag entries",
@@ -132,20 +135,20 @@ public class StackOverflowCsvParser : IStackOverflowCsvParser
 
         // Join data: Questions ← Answers (top score) ← Tags (aggregated)
         var documents = new List<StackOverflowDocument>();
+        var answersByQuestion = answers.ToLookup(a => a.ParentId);
+        var tagsByQuestion = tags.ToLookup(t => t.Id);
 
         foreach (var question in questions)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             // Get top-scoring answer for this question
-            var topAnswer = answers
-                .Where(a => a.ParentId == question.Id)
+            var topAnswer = answersByQuestion[question.Id]
                 .OrderByDescending(a => a.Score)
                 .FirstOrDefault();
 
             // Get all tags for this question
-            var questionTags = tags
-                .Where(t => t.Id == question.Id)
+            var questionTags = tagsByQuestion[question.Id]
                 .Select(t => t.Tag)
                 .Distinct()
                 .ToArray();
@@ -233,7 +236,7 @@ public class StackOverflowCsvParser : IStackOverflowCsvParser
         return questions;
     }
 
-    private async Task<List<AnswerRow>> LoadAnswersAsync(string path, CancellationToken cancellationToken)
+    private async Task<List<AnswerRow>> LoadAnswersAsync(string path, HashSet<int> questionIds, CancellationToken cancellationToken)
     {
         var answers = new List<AnswerRow>();
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -255,8 +258,13 @@ public class StackOverflowCsvParser : IStackOverflowCsvParser
 
             try
             {
-                var id = csv.GetField<int>("Id");
                 var parentId = csv.GetField<int>("ParentId");
+                if (!questionIds.Contains(parentId))
+                {
+                    continue;
+                }
+
+                var id = csv.GetField<int>("Id");
                 var body = csv.GetField<string>("Body");
                 var score = csv.GetField<int>("Score");
 
@@ -274,7 +282,7 @@ public class StackOverflowCsvParser : IStackOverflowCsvParser
         return answers;
     }
 
-    private async Task<List<TagRow>> LoadTagsAsync(string path, CancellationToken cancellationToken)
+    private async Task<List<TagRow>> LoadTagsAsync(string path, HashSet<int> questionIds, CancellationToken cancellationToken)
     {
         var tags = new List<TagRow>();
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -297,6 +305,11 @@ public class StackOverflowCsvParser : IStackOverflowCsvParser
             try
             {
                 var id = csv.GetField<int>("Id");
+                if (!questionIds.Contains(id))
+                {
+                    continue;
+                }
+
                 var tag = csv.GetField<string>("Tag");
 
                 if (!string.IsNullOrWhiteSpace(tag))

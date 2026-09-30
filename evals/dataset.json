@@ -1,0 +1,802 @@
+[
+  {
+    "id": 1,
+    "question": "How can I handle all errors in a Windows Forms user interface?",
+    "style": "specific",
+    "expectedPostId": 2770,
+    "originalTitle": "Global Exception Handling for winforms control",
+    "referenceAnswer": "You need to handle the System.Windows.Forms.Application.ThreadException event for Windows Forms. This article really helped me: http://bytes.com/forum/thread236199.html."
+  },
+  {
+    "id": 2,
+    "question": "Why does $(\u0027#example\u0027).datepicker() only work on the first datepicker?",
+    "style": "keyword",
+    "expectedPostId": 34790,
+    "originalTitle": "duplicating jQuery datepicker",
+    "referenceAnswer": "I use a CSS class instead: \u003Cinput type=\u0022text\u0022 id=\u0022BeginDate\u0022 class=\u0022calendar\u0022 /\u003E \u003Cinput type=\u0022text\u0022 id=\u0022EndDate\u0022 class=\u0022calendar\u0022 /\u003E Then, in your document.ready function: $(\u0027.calendar\u0027).datepicker(); Using it that way for multiple calendar fields works for me."
+  },
+  {
+    "id": 3,
+    "question": "What do high and low filters do?",
+    "style": "vague",
+    "expectedPostId": 35530,
+    "originalTitle": "What Are High-Pass and Low-Pass Filters?",
+    "referenceAnswer": "Here is how you implement a low-pass filter using convolution: double[] signal = (some 1d signal); double[] filter = [0.25 0.25 0.25 0.25]; // box-car filter double[] result = new double[signal.Length \u002B filter.Length \u002B 1]; // Set result to zero: for (int i=0; i \u003C result.Length; i\u002B\u002B) result[i] = 0; // Do convolution: for (int i=0; i \u003C signal.Length; i\u002B\u002B) for (int j=0; j \u003C filter.Length; j\u002B\u002B) result[i\u002Bj] = result[i\u002Bj] \u002B signal[i] * filter[j]; Note that the example is extremely simplified. It does not do range checks and does not handle the edges properly. The filter used (box-car) is a particularly bad lowpass filter, because it will cause a lot of artifacts (ringing). Read up on filter design. You can also implement the filters in the frequency domain. Here is how you implement a high-pass filter using FFT: double[] signal = (some 1d signal); // Do FFT: double[] real; double[] imag; [real, imag] = fft(signal) // Set the first quarter of the real part to zero to attenuate the low frequencies for (int i=0; i \u003C real.Length / 4; i\u002B\u002B) real[i] = 0; // Do inverse FFT: double[] highfrequencysignal = inversefft(real, imag); Again, this is simplified, but you get the idea. The code does not look as complicated as the math."
+  },
+  {
+    "id": 4,
+    "question": "Why does my web server revert to an outdated configuration after restarting?",
+    "style": "specific",
+    "expectedPostId": 36030,
+    "originalTitle": "Yaws uses old config file",
+    "referenceAnswer": "I\u0027m completely inexperienced with yaws, but I have a troubleshooting suggestion: What happens if you remove the config file completely? If it still starts yaws without a config file, that could be a clear sign that something is being cached. For what it\u0027s worth, with a quick 5 minutes of googling, I found no mention of any caching behavior."
+  },
+  {
+    "id": 5,
+    "question": "How to change default rows per page in Grails scaffolding?",
+    "style": "keyword",
+    "expectedPostId": 57910,
+    "originalTitle": "How do I increase the number of default rows per page?",
+    "referenceAnswer": "You have to install scaffold templates with: grails install-templates Now, edit in src/templates/scaffolding Controller.groovy and increase the value params.max as you want"
+  },
+  {
+    "id": 6,
+    "question": "How do I get multiple results in SQL?",
+    "style": "vague",
+    "expectedPostId": 58940,
+    "originalTitle": "Access to Result sets from within Stored procedures Transact-SQL SQL Server",
+    "referenceAnswer": "The short answer is: you can\u0027t do it. From T-SQL there is no way to access multiple results of a nested stored procedure call, without changing the stored procedure as others have suggested. To be complete, if the procedure were returning a single result, you could insert it into a temp table or table variable with the following syntax: INSERT INTO #Table (...columns...) EXEC MySproc ...parameters... You can use the same syntax for a procedure that returns multiple results, but it will only process the first result, the rest will be discarded."
+  },
+  {
+    "id": 7,
+    "question": "Is there a library that helps compare outputs for testing and allows updates?",
+    "style": "specific",
+    "expectedPostId": 66330,
+    "originalTitle": "Perl aids for regression testing",
+    "referenceAnswer": "Perl has excellent utilities for doing testing. The most commonly used module is probably Test::More, which provides all the infrastructure you\u0027re likely to need for writing regression tests. The prove utility provides an easy interface for running test suites and summarizing the results. The Test::Differences module (which can be used with Test::More) might be useful to you as well. It formats differences as side-by-side comparisons. As for committing the actual output as the new reference material, that will depend on how your code under test provides output and how you capture it. It should be easy if you write to files and then compare them. If that\u0027s the case you might want to use the Text::Diff module within your test suite."
+  },
+  {
+    "id": 8,
+    "question": "How to prevent public property from showing in Visual Studio Property Window?",
+    "style": "keyword",
+    "expectedPostId": 71440,
+    "originalTitle": "Set a UserControl Property to Not Show Up in VS Properties Window",
+    "referenceAnswer": "Use the following attribute ... using System.ComponentModel; [Browsable(false)] public bool SampleProperty { get; set; } In VB.net, this will be: \u003CSystem.ComponentModel.Browsable(False)\u003E"
+  },
+  {
+    "id": 9,
+    "question": "How do I change my password for VisualSVN?",
+    "style": "vague",
+    "expectedPostId": 74560,
+    "originalTitle": "VisualSVN Server wants a username and password",
+    "referenceAnswer": "It depends on how your Visual SVN Server is set up. If you are using native windows authentication, just enter you domain username and password. Otherwise, you will have to log into the machine running Visual SVN Server and reset your password there. Visual SVN Server provides a convenient tool for managing users, passwords, permissions, etc. This tool should be available from the Start Menu on your server."
+  },
+  {
+    "id": 10,
+    "question": "Should I avoid using stateful service calls in my web application?",
+    "style": "specific",
+    "expectedPostId": 94660,
+    "originalTitle": "Stateful Web Services",
+    "referenceAnswer": "Statefulness runs counter to the basic architecture of HTTP (ask Roy Fielding), and reduces scalability."
+  },
+  {
+    "id": 11,
+    "question": "How to retrieve original objects from RowKey in ObjectListDataProvider?",
+    "style": "keyword",
+    "expectedPostId": 100820,
+    "originalTitle": "How do I retrieve the selected rows of a woodstock table",
+    "referenceAnswer": "Always nice to be able to answer you own questions. I managed to solve it by casting the table\u0027s data provider to ObjectListDataProvider and use the method \u0027getObject\u0027 to get my original object back."
+  },
+  {
+    "id": 12,
+    "question": "Why is my app slow on AMD processors?",
+    "style": "vague",
+    "expectedPostId": 100960,
+    "originalTitle": "AMD 64 bit Dual Core Optimization",
+    "referenceAnswer": "Note that AMD64 is a NUMA architecture - if you are using a multi-processor box you may be running lots of memory accesses across the hypertransport bus which will be slower than the local memory and may explain the behaviour. This will not be the case between cores on a single socket so feel free to ignore this if you are not using a multiple-socket machine. Linux is NUMA aware (i.e. it has system services to allocate memory by local bank and bind processes to specific CPU\u0027s). I believe that Win 2k3 server, 2k8 and Vista are NUMA aware but XP is not. Most of the proprietary unix variants such as Solaris have NUMA support as well."
+  },
+  {
+    "id": 13,
+    "question": "How can I efficiently manage sorting for large datasets in tables?",
+    "style": "specific",
+    "expectedPostId": 117570,
+    "originalTitle": "Best approach for sortable table with a lot of data",
+    "referenceAnswer": "You should be doing paging back on the database server. E.g. on SQL 2005 and SQL 2008 there are paging techniques. I\u0027d suggest looking at paging options for whatever system you\u0027re looking at."
+  },
+  {
+    "id": 14,
+    "question": "simple command line program to backup SQL Server 2005 databases",
+    "style": "keyword",
+    "expectedPostId": 122690,
+    "originalTitle": "What is a simple command line program or script to backup SQL server databases?",
+    "referenceAnswer": "To backup a single database from the command line, use osql or sqlcmd. \u0022C:\\Program Files\\Microsoft SQL Server\\90\\Tools\\Binn\\osql.exe\u0022 -E -Q \u0022BACKUP DATABASE mydatabase TO DISK=\u0027C:\\tmp\\db.bak\u0027 WITH FORMAT\u0022 You\u0027ll also want to read the documentation on BACKUP and RESTORE and general procedures."
+  },
+  {
+    "id": 15,
+    "question": "How do I send a timestamp in SQL?",
+    "style": "vague",
+    "expectedPostId": 132390,
+    "originalTitle": "Passing timestamp parameters in SQLAnalyzer to debug stored procedures",
+    "referenceAnswer": "The debug input screen expects you to enter a hexadecimal value. You don\u0027t have to enter the 0x in front of this value. Just enter 00000001410039E2 and it will work."
+  },
+  {
+    "id": 16,
+    "question": "Has anyone managed to integrate with the affiliate network\u0027s services without issues?",
+    "style": "specific",
+    "expectedPostId": 146890,
+    "originalTitle": "Anyone successfully using Commission Junction API?",
+    "referenceAnswer": "After a spending many days, this code is working for me. $client = new SoapClient($cjCommissionUrl, array(\u0027trace\u0027 =\u003E 1, \u0027soap_version\u0027 =\u003E SOAP_1_1, \u0027style\u0027 =\u003E SOAP_DOCUMENT, \u0027encoding\u0027 =\u003E SOAP_LITERAL )); $date = \u002706/23/2010\u0027; $results = $client-\u003EfindPublisherCommissions(array( \u0022developerKey\u0022 =\u003E $cjDeveloperKey, \u0022date\u0022 =\u003E $date, \u0022dateType\u0022 =\u003E \u0027posting\u0027, \u0022countries\u0022 =\u003E \u0027all\u0027, ));"
+  },
+  {
+    "id": 17,
+    "question": "Why is my OnPaint method not getting called in CTiledImgViewControl?",
+    "style": "keyword",
+    "expectedPostId": 150900,
+    "originalTitle": "Windows Forms UserControl overrides not being called",
+    "referenceAnswer": "The OnPaint won\u0027t normally get called in a UserControl unless you set the appropriate style when it is constructed using the SetStyle method. You need to set the UserPaint style to true for the OnPaint to get called. SetStyle(ControlStyles::UserPaint, true); Update I recently encountered this issue myself and went digging for an answer. I wanted to perform some calculations during a paint (to leverage the unique handling of paint messages) but I wasn\u0027t always getting a call to OnPaint. After digging around with Reflector, I discovered that OnPaint is only called if the clipping rectangle of the corresponding WM_PAINT message is not empty. My UserControl instance had a child control that filled its entire client region and therefore, clipped it all. This meant that the clipping rectangle was empty and so no OnPaint call. I worked around this by overriding WndProc and adding a handler for WM_PAINT directly as I couldn\u0027t find another way to achieve what I wanted."
+  },
+  {
+    "id": 18,
+    "question": "How can I watch file changes in Python?",
+    "style": "vague",
+    "expectedPostId": 155490,
+    "originalTitle": "OS-independent API to monitor file system?",
+    "referenceAnswer": "The APIs are totally different for Windows, Linux, Mac OS X, and any other Unix you can name, it seems. I don\u0027t know of any cross-platform library that handles this in a consistent way."
+  },
+  {
+    "id": 19,
+    "question": "How can I set the termination status for a command-line program?",
+    "style": "specific",
+    "expectedPostId": 155610,
+    "originalTitle": "How do I specify the exit code of a console application in .NET?",
+    "referenceAnswer": "You can return it from Main if you declare your Main method to return int, or call Environment.Exit(code)."
+  },
+  {
+    "id": 20,
+    "question": "What is the best practice for looping through elements with getElementsByTagName in JavaScript?",
+    "style": "keyword",
+    "expectedPostId": 157260,
+    "originalTitle": "What\u0027s the best way to loop through a set of elements in JavaScript?",
+    "referenceAnswer": "Here\u0027s a nice form of a loop I often use. You create the iterated variable from the for statement and you don\u0027t need to check the length property, which can be expensive specially when iterating through a NodeList. However, you must be careful, you can\u0027t use it if any of the values in array could be \u0022falsy\u0022. In practice, I only use it when iterating over an array of objects that does not contain nulls (like a NodeList). But I love its syntactic sugar. var list = [{a:1,b:2}, {a:3,b:5}, {a:8,b:2}, {a:4,b:1}, {a:0,b:8}]; for (var i=0, item; item = list[i]; i\u002B\u002B) { // Look no need to do list[i] in the body of the loop console.log(\u0022Looping: index \u0022, i, \u0022item\u0022 \u002B item); } Note that this can also be used to loop backwards (as long as your list doesn\u0027t have a [\u0027-1\u0027] property) var list = [{a:1,b:2}, {a:3,b:5}, {a:8,b:2}, {a:4,b:1}, {a:0,b:8}]; for (var i = list.length - 1, item; item = list[i]; i--) { console.log(\u0022Looping: index \u0022, i, \u0022item\u0022, item); }"
+  },
+  {
+    "id": 21,
+    "question": "Can PHP work with a small SQL database?",
+    "style": "vague",
+    "expectedPostId": 168240,
+    "originalTitle": "Is it possible to connect PHP to SQL Server Compact Edition?",
+    "referenceAnswer": "Short Answer : No. Long Answer : To my knowledge, unlike PostgreSQL / MySQL / MS-SQL, there is no native driver to connect PHP to SQL Server Compact Edition. If you want to connect to it, your best bet is to use PHP ODBC connections to talk to a ODBC Driver connected to the SQL Compact server. But its pretty much a hack, and you\u0027d be crazy to use this kind of thing for anything remotely important. If you are worried about SQL Server Express being too heavy, use MySQL with MyISAM tables. It\u0027s pretty fast and lightweight. Emergent has a good checklist of things to configure / disable to make MySQL even faster and use less resources. Relevant links : MSDN Post asking the same question Erik EJ\u0027s blog - SQL Compact with OLE DB"
+  },
+  {
+    "id": 22,
+    "question": "How can I implement double buffering for a custom component with buttons?",
+    "style": "specific",
+    "expectedPostId": 171830,
+    "originalTitle": "Double buffer child controls in custom control (C#)",
+    "referenceAnswer": "Technically you can\u0027t, and you really shouldn\u0027t need to if they\u0027re standard .NET WinForms buttons. The buttons themselves control that through the protected DoubleBuffered property. The only way to access this would be to derive a new class from S.W.F.Button, and implement code to enable the DoubleBuffered property on instances of that class (I\u0027d probably do that in the constructor). Finally, use objects of that new class on your form instead of S.W.F.Buttons. However, as I recall, buttons are purely drawn from WinAPI; they are not GDI\u002B. As a result, you shouldn\u0027t need to double-buffer their drawing. That said, I don\u0027t know your usage scenario and I don\u0027t know what symptoms your app is displaying, so I could be wrong. :) You might consider checking out the book Pro .NET 2.0 Windows Forms and Custom Controls in C#. All of this was summarized from information in that book."
+  },
+  {
+    "id": 23,
+    "question": "How to fix urllib2.HTTPError 404 with paver bootstrap method?",
+    "style": "keyword",
+    "expectedPostId": 178300,
+    "originalTitle": "Paver 0.8.1 compatibility with python 2.6",
+    "referenceAnswer": "You should try newer version. =) http://www.blueskyonmars.com/projects/paver/"
+  },
+  {
+    "id": 24,
+    "question": "How to handle different message types in WCF?",
+    "style": "vague",
+    "expectedPostId": 183530,
+    "originalTitle": "WCF Endpoint with Priority",
+    "referenceAnswer": "You should take a look at this great two part series from Michele Leroux Bustamante in MSDN Magazine: Building a WCF Router, Part 1 and Building a WCF Router, Part 2 Part 1, in particular, would be interesting to you: Sometimes it is useful to introduce an intermediary or router service between a client and a target service to receive messages that flow between them and perform additional activities such as logging, priority routing, online/offline routing, load balancing, or to introduce a security boundary. When such an intermediate service is introduced, it becomes necessary to tweak some addressing and message filtering behaviors to accommodate. [my emphasis added] She also has the related source code available on her blog."
+  },
+  {
+    "id": 25,
+    "question": "How can I use an in-memory database with my data access framework?",
+    "style": "specific",
+    "expectedPostId": 189280,
+    "originalTitle": "Problem using SQLite :memory: with NHibernate",
+    "referenceAnswer": "A SQLite memory database only exists as long as the connection to it remains open. To use it in unit tests with NHibernate: 1. Open an ISession at the beginning of your test (maybe in a [SetUp] method). 2. Use the connection from that session in your SchemaExport call. 3. Use that same session in your tests. 4. Close the session at the end of your test (maybe in a [TearDown] method)."
+  },
+  {
+    "id": 26,
+    "question": "What is the correct MIME type for the \u0022type\u0022 attribute of a script tag?",
+    "style": "keyword",
+    "expectedPostId": 189850,
+    "originalTitle": "What is the javascript MIME type for the type attribute of a script tag?",
+    "referenceAnswer": "This is a common mistake. The MIME type for javascript wasn\u0027t standardized for years. It\u0027s now officially: \u0022application/javascript\u0022. The real kicker here is that most browsers won\u0027t use that attribute anyway, at least not in the case of the script tag. They actually peek inside the packet and determine the type for themselves. So the bottom line is that the type=\u0022text/javascript\u0022 doesn\u0027t do anything as far as the javascript is concerned, but it\u0027s part of the spec for both HTML 4 and XHTML 1.0."
+  },
+  {
+    "id": 27,
+    "question": "How do I move files in MFC?",
+    "style": "vague",
+    "expectedPostId": 191980,
+    "originalTitle": "In an MFC application, what\u0027s the easiest way to copy a file from one directory to another?",
+    "referenceAnswer": "I would just use the CopyFile Win32 API function, but the example code in the CFile::Open documentation shows how to copy files with CFile (using pretty much the method you suggest)."
+  },
+  {
+    "id": 28,
+    "question": "What are effective tools and strategies for transferring content to a new platform?",
+    "style": "specific",
+    "expectedPostId": 205260,
+    "originalTitle": "Migrating from other Content Management Systems to SharePoint",
+    "referenceAnswer": "You can check http://www.codeplex.com/SPMigration (open source, project started by a Microsoft consultant). This framework gives you an importer tool, as well as some exporter example (FileSystem for example). You\u0027ll problably have to code your own exporter."
+  },
+  {
+    "id": 29,
+    "question": "How do other teams create an improvement story in Agile/Scrum?",
+    "style": "keyword",
+    "expectedPostId": 212850,
+    "originalTitle": "Scrum/Agile: How do you plan in internal improvements?",
+    "referenceAnswer": "Great question. I think there are several flavors of \u0022action items\u0022 from retrospectives that deserve different approaches. 1) technical tasks to address things like technical debt or infrastructure improvements - like \u0022We should ensure we have no database calls in the view layer of our application, cuz that caused us to waste time in this past iteration... somebody should do a search through the code to make sure we\u0027re not doing that someplace else.\u0022 2) process improvements (e.g. \u0022folks aren\u0027t coming to the standups on time... lets start a $1 for charity donation whenever someone\u0027s late\u0022.) The first category can be significant work, or it might be straightforward. The example I showed was pretty easy... but might generate other tasks that need to be scheduled (e.g. removing the database calls in the 5 locations where they were discovered). The second category should be handled/driven by the iteration manager, project manager, scrum manager, etc. I (as a Scrum Master or Project Manager) usually list them on a project wiki and talk about them in retrospectives, check them off when they\u0027re addressed, and report to the team on status. I keep the fire lit. I think the mistake in the first category - technical tasks - is that we don\u0027t define acceptance criteria. Your examples included \u0022improving the build system, setting up better integration tests, having a better release strategy\u0022. These are non-deterministic and need to be enumerated in crisp terms (using spikes if necessary). So - improving the build system might start with a technical task or a spike to assess options. We also need to break-down and prioritize technical tasks (e.g. maybe \u0022better integration tests\u0022 could start with a technical task of defining the current integration coverage, or assessing the percentage of bugs that could be blamed on integration failures to build the case for investment there. Once you have your priorities set, then you can convey the value of the high priority items and negotiate with the product owner for time to spend on them. I\u0027m not a big fan of predefined buckets to spend on anything... but having the conversation with the product owner with crisp requirements, ROI, and acceptance criteria is key."
+  },
+  {
+    "id": 30,
+    "question": "How to create an object with parameters in Java?",
+    "style": "vague",
+    "expectedPostId": 234600,
+    "originalTitle": "Can I use Class.newInstance() with constructor arguments?",
+    "referenceAnswer": "Class.getDeclaredConstructor(String.class).newInstance(\u0022HERESMYARG\u0022);"
+  },
+  {
+    "id": 31,
+    "question": "How can I arrange the columns of a grid in alphabetical sequence?",
+    "style": "specific",
+    "expectedPostId": 235450,
+    "originalTitle": "C# How do I sort the columns in a datagrid into alphabetical order?",
+    "referenceAnswer": "Have you tried binding the DataGrid to a DataTable object (instead of a view) and turning setting the \u0022AllowSorting\u0022 property to true on the DataGrid? I believe the grid will then automatically sort the table source for you. If not, you can always catch the event when a column header is clicked and rebuild a DataView to bind to the DataGrid."
+  },
+  {
+    "id": 32,
+    "question": "How to execute a function 50% of the time in VB6?",
+    "style": "keyword",
+    "expectedPostId": 235940,
+    "originalTitle": "How do I make a function happen 50% of the time in vb6",
+    "referenceAnswer": "Generate a random decimal number between 0 and 1. If it is greater than 0.5 run, if it is less than or equal to 0.5 do not run."
+  },
+  {
+    "id": 33,
+    "question": "How to use wildcards in Python string searches?",
+    "style": "vague",
+    "expectedPostId": 238600,
+    "originalTitle": "How can I support wildcards in user-defined search strings in Python?",
+    "referenceAnswer": "You could try the fnmatch module, it\u0027s got a shell-like wildcard syntax."
+  },
+  {
+    "id": 34,
+    "question": "How can I ensure special characters are stored correctly in my database?",
+    "style": "specific",
+    "expectedPostId": 243540,
+    "originalTitle": "adodb and access changing \u00AE to \u00C2\u00AE",
+    "referenceAnswer": "Looks like you\u0027re passing in a UTF8 string but you\u0027re not storing it as UTF8. Change it one way or the other so they match up (preferably change your database to UTF8)."
+  },
+  {
+    "id": 35,
+    "question": "How to diagnose Apache Tomcat wrong page delivery issue with mod_jk and mod_proxy_ajp?",
+    "style": "keyword",
+    "expectedPostId": 246540,
+    "originalTitle": "Apache/Tomcat error - wrong pages being delivered",
+    "referenceAnswer": "Could it be the thread-safety of your servlets? Do your servlets store any information in instance members. For example, something as simple as the following may cause thread-related issues: public class MyServlet ... { private String action; public void doGet(...) { action = request.getParameter(\u0022action\u0022); processAction(response); } public void processAction(...) { if (action.equals(\u0022foo\u0022)) { // send foo page } else if (action.equals(\u0022bar\u0022)) { // send bar page } } } Because the serlvet is accessed by multiple threads, there is no guarantee that the action instance member will not be clobbered by someone elses request, and end up sending the wrong page back. The simple solution to this issue is to use local variables insead of instance members: public class MyServlet ... { public void doGet(...) { String action = request.getParameter(\u0022action\u0022); processAction(action, response); } public void processAction(...) { if (action.equals(\u0022foo\u0022)) { // send foo page } else if (action.equals(\u0022bar\u0022)) { // send bar page } } } Note: this extends to JavaServer Pages too, if you were dispatching to them for your views?"
+  },
+  {
+    "id": 36,
+    "question": "How can I load different sites in one frame?",
+    "style": "vague",
+    "expectedPostId": 247200,
+    "originalTitle": "Load multiple external websites into one webpage via re-using ONE IFrame \u002B Ajax",
+    "referenceAnswer": "You are trying to use a hammer to put screws in the wall. Maybe some will go, but it won\u0027t be pretty. Your best option would be either a screen scraper or web services in order to retrieve the data from the external sites. Perhaps include more details about the situation such as, are the external sites your own. Do they offer syndication of their content that you are after. Are offline services available to you so you can consume this content?"
+  },
+  {
+    "id": 37,
+    "question": "What are some easy and engaging resources for learning algorithm evaluation?",
+    "style": "specific",
+    "expectedPostId": 259660,
+    "originalTitle": "Painless \u0027Analysis of Algorithms\u0027 Training?",
+    "referenceAnswer": "There are a lot of good books on the subject. I like An Introduction to the Analysis of Algorithms. Also check out the algorithms course on MIT OpenCourseWare (using CLRS as the course text). It\u0027s a little bit deep, but having it online allows you to go at your own pace. A couple of other books that I\u0027ve started reading recently are Algorithms in a Nutshell and the Algorithm Design Manual. They both take a lighter approach than most algorithms books. Instead of heavy math and formal proofs these books give you realistic problem statements and show you the steps taken to refine an algorithm. They also show you how to estimate and measure the complexity of a solution. I would highly recommend either book."
+  },
+  {
+    "id": 38,
+    "question": "What are practical applications of the Traveling Salesman Algorithm (TSP)?",
+    "style": "keyword",
+    "expectedPostId": 264050,
+    "originalTitle": "Have you used a traveling salesman algorithm to solve a problem?",
+    "referenceAnswer": "I was once given the task of writing a program to fill a rectangular area fairly uniformly with a \u0022squiggle\u0022 - a curved line which doesn\u0027t self-intersect. My first attempt was to generate random points within the rectangle and try to find a tour of them (not necessarily the absolute shortest). Unfortunately this approach just didn\u0027t work very well and I abandoned it. I did solve the problem in the end though: My successful method was not related to the TSP but for the curious I will summarize it: Start with a single line segment. Now loop: if a line is \u0022too long\u0022, divide it in two. Move each point a bit at random, but make points repel each other. End the loop when little progress can be made. There are details but hopefully you get the idea. Of course this produces an angular path (which would have been acceptable) but it is easy to turn the corners into smooth arcs. And yes I did keep the code."
+  },
+  {
+    "id": 39,
+    "question": "Why doesn\u0027t my web view show everything?",
+    "style": "vague",
+    "expectedPostId": 267330,
+    "originalTitle": "UIWebView within a ScrollView does not redraw",
+    "referenceAnswer": "UIWebViews cannot be loaded concurrently. You must load one, wait til it finishes, then load the next, and so on. You can do this on a timer, or wait until when the scrolled UIWebView has the focus before loading the data."
+  },
+  {
+    "id": 40,
+    "question": "What distinguishes a sequential collection from a hierarchical data structure? When should I use each?",
+    "style": "specific",
+    "expectedPostId": 270080,
+    "originalTitle": "Difference between a LinkedList and a Binary Search Tree",
+    "referenceAnswer": "Linked List: Item(1) -\u003E Item(2) -\u003E Item(3) -\u003E Item(4) -\u003E Item(5) -\u003E Item(6) -\u003E Item(7) Binary tree: Node(1) / Node(2) / \\ / Node(3) RootNode(4) \\ Node(5) \\ / Node(6) \\ Node(7) In a linked list, the items are linked together through a single next pointer. In a binary tree, each node can have 0, 1 or 2 subnodes, where (in case of a binary search tree) the key of the left node is lesser than the key of the node and the key of the right node is more than the node. As long as the tree is balanced, the searchpath to each item is a lot shorter than that in a linked list. Searchpaths: ------ ------ ------ key List Tree ------ ------ ------ 1 1 3 2 2 2 3 3 3 4 4 1 5 5 3 6 6 2 7 7 3 ------ ------ ------ avg 4 2.43 ------ ------ ------ By larger structures the average search path becomes significant smaller: ------ ------ ------ items List Tree ------ ------ ------ 1 1 1 3 2 1.67 7 4 2.43 15 8 3.29 31 16 4.16 63 32 5.09 ------ ------ ------"
+  },
+  {
+    "id": 41,
+    "question": "How to replace window.onbeforeunload dialog with jQuery modal?",
+    "style": "keyword",
+    "expectedPostId": 276660,
+    "originalTitle": "How can I override the OnBeforeUnload dialog and replace it with my own?",
+    "referenceAnswer": "You can\u0027t modify the default dialogue for onbeforeunload, so your best bet may be to work with it. window.onbeforeunload = function() { return \u0027You have unsaved changes!\u0027; } Here\u0027s a reference to this from Microsoft: When a string is assigned to the returnValue property of window.event, a dialog box appears that gives users the option to stay on the current page and retain the string that was assigned to it. The default statement that appears in the dialog box, \u0022Are you sure you want to navigate away from this page? ... Press OK to continue, or Cancel to stay on the current page.\u0022, cannot be removed or altered. The problem seems to be: When onbeforeunload is called, it will take the return value of the handler as window.event.returnValue. It will then parse the return value as a string (unless it is null). Since false is parsed as a string, the dialogue box will fire, which will then pass an appropriate true/false. The result is, there doesn\u0027t seem to be a way of assigning false to onbeforeunload to prevent it from the default dialogue. Additional notes on jQuery: Setting the event in jQuery may be problematic, as that allows other onbeforeunload events to occur as well. If you wish only for your unload event to occur I\u0027d stick to plain ol\u0027 JavaScript for it. jQuery doesn\u0027t have a shortcut for onbeforeunload so you\u0027d have to use the generic bind syntax. $(window).bind(\u0027beforeunload\u0027, function() {} );"
+  },
+  {
+    "id": 42,
+    "question": "Do I need to close connections in SQL?",
+    "style": "vague",
+    "expectedPostId": 286190,
+    "originalTitle": "Importance of closing SQLConnection objects when using the SQLDataReader object",
+    "referenceAnswer": "Nothing wrong with inline sql if the user input is properly parameterized, and this looks like it is. Other than that, yes you do need to close the connections. On a busy web site you could hit your limit and that would cause all kinds of weirdness. I also noticed it\u0027s still using an arraylist. Since they\u0027ve moved on from .Net 1.0 it\u0027s time to update those to generic List\u003CT\u003E\u0027s (and avoid the call to CType- you should be able to DirectCast() that instead)."
+  },
+  {
+    "id": 43,
+    "question": "How can I create a profanity filter for my web application?",
+    "style": "specific",
+    "expectedPostId": 299450,
+    "originalTitle": "How to best implement swear words handler (.NET preferred)?",
+    "referenceAnswer": "Obscenity Filters: Bad Idea, or Incredibly Intercoursing Bad Idea? ^_^ Also see How do you implement a good profanity filter?."
+  },
+  {
+    "id": 44,
+    "question": "How to find the index of the first char in a string that is not in a list?",
+    "style": "keyword",
+    "expectedPostId": 300660,
+    "originalTitle": "How to find the index of the first char in a string that is not in a list",
+    "referenceAnswer": "This works: public static char FindFirstNotAny(this string value, params char[] charset) { return value.TrimStart(charset)[0]; }"
+  },
+  {
+    "id": 45,
+    "question": "What is a good tool for PHP websites?",
+    "style": "vague",
+    "expectedPostId": 301240,
+    "originalTitle": "What\u0027s a PHP framework and what\u0027s a good one?",
+    "referenceAnswer": "Asking a programming forum what is a good framework is like asking a car forum what is a good car. The opinions vary wildly, and in 95% of cases, it really doesn\u0027t matter what you choose, as long as it\u0027s actively developed. Most of your replies will be based on religion and not subjective comparisons. :)"
+  },
+  {
+    "id": 46,
+    "question": "How can I stop an XML parser from accessing external definitions during processing?",
+    "style": "specific",
+    "expectedPostId": 303510,
+    "originalTitle": "How can I prevent XML::XPath from fetching a DTD while processing an XML file?",
+    "referenceAnswer": "XML::XPath is based on XML::Parser. There is an option in XML::Parser to NOT use LWP to resolve external entities (such as DTDs). And XML::XPath lets you pass an XML::Parser objetc, to use as the parser. So you can write this: my $p = XML::Parser-\u003Enew( NoLWP =\u003E 1); my $xp= XML::XPath-\u003Enew( parser =\u003E $p, filename =\u003E \u0022a.xhtml\u0022); Note that in this case you will loose all entities except numerical ones and the default ones (\u003E, \u003C, \u0026, \u0027 and \u0022). The parser will not complain, but they will disappear silently (try including \u0026alpha; in the table and printing it for example). As a matter of fact you probably should not use XML::XPath, which is not actively maintained. Try XML::LibXML, if you have no problem with installing libxml2, its interface is very similar to XML::XPath as they both implement the DOM. XML::LibXML is also much more powerful than XML::XPath, and faster to boot. If you want an expat/XML::Parser based module, they you might want to have a look at XML::Twig (that\u0027s blatant self-promotion as I am the author of the module, sorry). Also for HTML/dodgy XHTML, you can use HTML::TreeBuilder, which, with the addition of HTML::TreeBuilder::XPath (also by me), supports XPath."
+  },
+  {
+    "id": 47,
+    "question": "Is there a JComponent for editing XML documents in Swing?",
+    "style": "keyword",
+    "expectedPostId": 304800,
+    "originalTitle": "Is there a free (LGPL, BSD, etc) implementation of XML editor swing component",
+    "referenceAnswer": "Maybe this Xml Editor would do: I had to enhance and restructure my XML Editor to make it a \u0022plugable\u0022 JPanel. Otherwise, you still have the SimpleEditor.java which might be as good."
+  },
+  {
+    "id": 48,
+    "question": "How to get the biggest number in a tree?",
+    "style": "vague",
+    "expectedPostId": 317740,
+    "originalTitle": "prolog recursively find largest node",
+    "referenceAnswer": "Is this another homework assignment? In any case, I\u0027ll try to let you do the thinking since you seem to be learning Prolog. Not to mention the fact that I don\u0027t actually have Prolog running on my computer, so I couldn\u0027t be sure my suggested solution would actually work. The fact that the 5 is the only node with only one subnode (i.e. the 8 it\u0027s ignoring) should tell you something. All the other nodes are either leaf nodes or have two subnodes. What exactly is it that you think these two rules do? tree(t(nil,Q,_),Q). tree(t(_,Q,nil),Q)."
+  },
+  {
+    "id": 49,
+    "question": "How can I create a query from a list of field names efficiently?",
+    "style": "specific",
+    "expectedPostId": 327010,
+    "originalTitle": "using a vector of column names, to generate a sql statement",
+    "referenceAnswer": "In your case it is probably safe to assume that there is at least one column since otherwise there is no point in doing the select. In that case you could do: selectSql = \u0022SELECT \u0022; selectSql \u002B= columns[0]._name; for (z = 1; z \u003C columns.size(); z\u002B\u002B) { selectSql \u002B= \u0022, \u0022; selectSql \u002B= columns[z]._name; } selectSql \u002B= \u0022 FROM some-table\u0022;"
+  },
+  {
+    "id": 50,
+    "question": "How to dynamically generate a PDF on Google\u0027s appengine?",
+    "style": "keyword",
+    "expectedPostId": 327700,
+    "originalTitle": "How to dynamically generate a pdf from Google\u0027s appengine?",
+    "referenceAnswer": "You can use the reportlab library to generate a PDF from Python. You can just include the ReportLab files in with your application\u0027s code, or you can include a zip archive of the ReportLab code, and insert it into your application\u0027s sys.path."
+  },
+  {
+    "id": 51,
+    "question": "What math do I need for Neural Networks?",
+    "style": "vague",
+    "expectedPostId": 336440,
+    "originalTitle": "Prerequisites Needed to Read Books on Neural Networks (and understand them)",
+    "referenceAnswer": "If you want a list of college courses that you\u0027ll need to understand the book, here it is: Calculus (I, II and III) Differential Equations Linear Algebra Statistics (or a good covering of Bayes) However, I did just fine in my NN classes without Diff. Eq. and just had to look up concepts I hadn\u0027t studied yet. You can take the black box approach as above, but if you really want to understand the math and implementation of the networks, you\u0027ll have to study. It\u0027s going to be a steep learning curve to fully grasp the more advanced networks no matter what you do. You can either take the above classes first, or you can start reading the book and look up everything you don\u0027t grasp on wikipedia, and then from those articles read whatever you have to read to understand them, etc. You will find that, either way, you\u0027ll eventually get past that initial peek and things will be easier. It would be good if you told us why you want to learn neural networks. I\u0027ve not found a single use for them in my professional career, though I\u0027m not a game developer or telecommunications developer."
+  },
+  {
+    "id": 52,
+    "question": "How can I optimize a query to utilize indexing for subquery results?",
+    "style": "specific",
+    "expectedPostId": 340020,
+    "originalTitle": "MySQL - how to use index in WHERE x IN ()",
+    "referenceAnswer": "SELECT employees.* FROM employees, clients WHERE employees.client_id = clients.id AND clients.name LIKE \u0027a%\u0027; Should be more quicker, since the optimiser can choose the most efficient plan. In writing it your way with a sub-query, you\u0027re forcing it to do the steps in a certain order rather than letting it choose the optimal join order. As a general rule sub-queries should be avoided since they will typically be less performant than a join query (though there are certain circumstances where they are unavoidable)"
+  },
+  {
+    "id": 53,
+    "question": "How to convert SQL stored procedure to LINQ for GetTimesheetForWeekById?",
+    "style": "keyword",
+    "expectedPostId": 348900,
+    "originalTitle": "Another LINQ Pivot Problem - Convert SQL Script to LINQ",
+    "referenceAnswer": "Well, assuming that the foreign key has an object representation, something like: int timesheetId = ... DateTime start = ..., end = ... var qry = from timeEntry in ctx.TimeEntries let date = timeEntry.StartTime.Date where timeEntry.TimesheetId == timesheetId \u0026\u0026 date \u003E= start \u0026\u0026 date \u003C= end group timeEntry by timeEntry.Task.TaskName into grp select new { TaskName = grp.Key, Monday = grp.Where(x =\u003E x.StartTime.DayOfWeek == DayOfWeek.Monday).Count(), Tuesday = grp.Where(x =\u003E x.StartTime.DayOfWeek == DayOfWeek.Tuesday).Count(), Wednesday = grp.Where(x =\u003E x.StartTime.DayOfWeek == DayOfWeek.Wednesday).Count(), Thursday = grp.Where(x =\u003E x.StartTime.DayOfWeek == DayOfWeek.Thursday).Count(), Friday = grp.Where(x =\u003E x.StartTime.DayOfWeek == DayOfWeek.Friday).Count() }; Unfortunately, some of the specifics depend on the SQL provider - i.e. which functions (like DayOfWeek etc) it can map successfully as TSQL. Let me know if you get problems..."
+  },
+  {
+    "id": 54,
+    "question": "How to use a list with grep in Groovy?",
+    "style": "vague",
+    "expectedPostId": 350620,
+    "originalTitle": "How do I use a variable in a grep with groovy?",
+    "referenceAnswer": "You\u0027re already using groovy, does using a regular expression that gives you your answer work? def file = new File(\u0022file.txt\u0022) file.delete() // clear out old version for multiple runs file \u003C\u003C \u0022\u0022\u0022 foobar clientLogin=a@yahoo.com baz quux # should match a@yahoo.com foobar email=a@yahoo.com baz quux foobar email=b@gmail.com bal zoom foobar clientLogin=a@yahoo.com baz quux # should match a@yahoo.com foobar clientLogin=b@gmail.com bal zoom # should match b@gmail.com foobar email=b@gmail.com bal zoom \u0022\u0022\u0022 def emailList = [\u0022a@yahoo.com\u0022, \u0022b@gmail.com\u0022] def emailListGroup = emailList.join(\u0027|\u0027) def pattern = /(?m)^.*clientLogin=($emailListGroup).*$/ def resultMap = [:] (file.text =~ pattern).each { fullLine, email -\u003E resultMap[email] = resultMap[email] ? resultMap[email] \u002B 1 : 1 } assert resultMap[\u0022a@yahoo.com\u0022] == 2 assert resultMap[\u0022b@gmail.com\u0022] == 1 That feels cleaner to me than trying to shell out to a process and working with that, plus it only will pick out the exact lines with \u0022clientLogin=(email)\u0022 that you\u0027re looking for."
+  },
+  {
+    "id": 55,
+    "question": "How can I display a confirmation notice after successful data updates?",
+    "style": "specific",
+    "expectedPostId": 361910,
+    "originalTitle": "Is there any native way in ASP.NET to do a \u0022success message\u0022?",
+    "referenceAnswer": "As far as I know, there is no native way of doing this. You may rant about it, maybe Microsoft will hear it :). Resetting the \u0022success message\u0022 on Page_Load, or wherever in your code-behind, won\u0027t work. This is because ASP.NET validation is usually done both client and server-side. This means for every validation control you put on the page, ASP.NET generates some client-side Javascript that does the validation and renders the error on the client, without going back to the server. So you\u0027re stuck with both the success message and the error message at the same time. What you can do about it: place a \u003Cdiv\u003E control on your page, that would show up the success message (as already suggested by others above). Whenever you update something (in server-side code), show up the control and set a meaningful \u0022Successful!\u0022 message text. register a custom Javascript function that would lookup the \u003Cdiv\u003E and hide it on every page submit. Be aware that the function needs to be called before the autogenerated client script that does the validation. If you look at the client source of an ASP.NET page (with validators on it), here\u0027s what you can find: \u003Cform name=\u0022aspnetForm\u0022 method=\u0022post\u0022 action=\u0022MyPage.aspx\u0022 onsubmit=\u0022javascript:return WebForm_OnSubmit();id=\u0022aspnetForm\u0022\u003E The WebForm_OnSubmit is generated by ASP.NET and calls the javascript that does the validation. Sample: function WebForm_OnSubmit() { if (typeof(ValidatorOnSubmit) == \u0022function\u0022 \u0026\u0026 ValidatorOnSubmit() == false) return false; return true; } To register your custom code that hides the success message, you should place (in your code-behind) something along these lines: if (!Page.ClientScript.IsOnSubmitStatementRegistered(\u0022ClearMessage\u0022)) { string script = @\u0022document.getElementById(\u0027\u0022 \u002B yourDivControl.ClientID \u002B \u0022\u0027).style.display=\u0027none\u0027\u0022; Page.ClientScript.RegisterOnSubmitStatement(Page.GetType(), \u0022ClearMessage\u0022, script); } This will turn your page\u0027s autogenerated WebForm_OnSubmit into the following: function WebForm_OnSubmit() { document.getElementById(\u0027ctl00_yourDivControl\u0027).style.display=\u0027none\u0027; if (typeof(ValidatorOnSubmit) == \u0022function\u0022 \u0026\u0026 ValidatorOnSubmit() == false) return false; return true; } The effect: On every postback (e.g. when ItemCommand is triggered, or when some Save button is clicked, or anything else), you will show up the div control with the \u0022success\u0022 message. On the next postback, just before submitting the page to the server, this message is cleared. Of course, if this postback also triggers a \u0022success\u0022, the message is shown again by the code-behind on the server. And so on and so forth. I hope the above is helpful. It\u0027s not the full-blown solution, but it gives sufficient hints to point you in the right direction."
+  },
+  {
+    "id": 56,
+    "question": "How do sites like Hubspot track inbound links legally?",
+    "style": "keyword",
+    "expectedPostId": 361930,
+    "originalTitle": "How do sites like Hubspot track inbound links?",
+    "referenceAnswer": "For example, if you wanted to find all the links to Google\u0027s homepage, search for link:http://www.google.com So if you want to find all the inbound links, you can simply traverse your website\u0027s tree, and for each item it finds, build a URL. Then query Google for: link:URL And you\u0027ll get a collection of all the links that Google has from other websites into your website. As for the legality of such harvesting, I\u0027m sure it\u0027s not-exactly-legal to make a profit from it, but that\u0027s never stopped anyone before, has it? (So I wouldn\u0027t bother wondering whether they did it or not. Just assume they do.)"
+  },
+  {
+    "id": 57,
+    "question": "How do I check for missing items in Excel?",
+    "style": "vague",
+    "expectedPostId": 368160,
+    "originalTitle": "Loop through PivotItems: runtime error 91",
+    "referenceAnswer": "I\u0027ve got it! :D Dim Table As PivotTable Dim FoundCell As Object Dim All As Range Dim PvI As PivotItem Set All = Worksheets(\u0022Analyse\u0022).Range(\u0022A7:AZ10000\u0022) Set Table = Worksheets(\u0022Analyse\u0022).PivotTables(\u0022tablename\u0022) For Each PvI In Table.PivotFields(\u0022fieldname\u0022).PivotItems Set FoundCell = All.Find(PvI.Name) If FoundCell \u003C\u003E \u0022itemname\u0022 Then PvI.Visible = False End If Next woohoo Thanks to MrExcel, the answer was there after all, though deeply buried."
+  },
+  {
+    "id": 58,
+    "question": "How can I set a specific folder as the main directory for my local server?",
+    "style": "specific",
+    "expectedPostId": 374420,
+    "originalTitle": "Configuring root directory internal ASP.NET server",
+    "referenceAnswer": "Go click on the website project in the solution explorer, then edit the \u0022Virtual path\u0022 in the properties window."
+  },
+  {
+    "id": 59,
+    "question": "How to ensure single instance of Python program without lock file?",
+    "style": "keyword",
+    "expectedPostId": 380870,
+    "originalTitle": "Python: single instance of program",
+    "referenceAnswer": "The following code should do the job, it is cross-platform and runs on Python 2.4-3.2. I tested it on Windows, OS X and Linux. from tendo import singleton me = singleton.SingleInstance() # will sys.exit(-1) if other instance is running The latest code version is available singleton.py. Please file bugs here. You can install tend using one of the following methods: easy_install tendo pip install tendo manually by getting it from http://pypi.python.org/pypi/tendo"
+  },
+  {
+    "id": 60,
+    "question": "How do I manage DLLs for Outlook add-ins?",
+    "style": "vague",
+    "expectedPostId": 384710,
+    "originalTitle": "How-To: Copy dependent assembly in case it is not in GAC?",
+    "referenceAnswer": "Just always copy it to the folder. If it\u0027s already in the GAC, the GAC\u0027d assembly will be used first anyway. In other words the runtime checks the GAC first. Then, checks application base, etc. http://msdn.microsoft.com/en-us/library/yx7xezcf(VS.71).aspx"
+  },
+  {
+    "id": 61,
+    "question": "How can I retrieve the specific name of my device in C#?",
+    "style": "specific",
+    "expectedPostId": 392960,
+    "originalTitle": "How to get the device name in C#?",
+    "referenceAnswer": "The registry value HKEY_LOCAL_MACHINE\\Ident\\Name contains the device name. Use the registry library to read it."
+  },
+  {
+    "id": 62,
+    "question": "What ASP.NET controls implement IPostBackDataHandler properties not saved in ViewState?",
+    "style": "keyword",
+    "expectedPostId": 401060,
+    "originalTitle": "What ASP.NET Web Controls implement IPostBackDataHandler?",
+    "referenceAnswer": "In the .NET IDE open the Object Browser Window. You can find this window on the View menu, or it may be, depending on your configuration, on the top toolbar. In the search textbox type in the class, or interface in this case, you are looking for: IPostBackDataHandler and submit. In the results, expand the type and then expand the derived types folder, you will find what you seek!"
+  },
+  {
+    "id": 63,
+    "question": "How to know when a ThreadPool task is done?",
+    "style": "vague",
+    "expectedPostId": 405600,
+    "originalTitle": "Detecting that a ThreadPool WorkItem has completed/waiting for completion",
+    "referenceAnswer": "Well, you\u0027ve got a race condition between fetching the WaitHandle and setting it. Do you really want the caller to be waiting forever if they happen to be a tiny bit late? You should probably do some appropriate locking and keep an \u0022I\u0027ve finished\u0022 flag so that if you do create the WaitHandle after it\u0027s finished, you set it before returning it. I\u0027d also personally write a static factory method rather than just using a public constructor - or make it a \u0022create and then explicitly start\u0022 pattern. Queuing the work item in the constructor feels weird to me."
+  },
+  {
+    "id": 64,
+    "question": "How can I invoke an Oracle function that returns a number from .Net?",
+    "style": "specific",
+    "expectedPostId": 411820,
+    "originalTitle": "Possible to call Oracle FUNCTION from .Net using Enterprise Library?",
+    "referenceAnswer": "Ok, this seems to work: Public Function GetNextJobNumber() As Object Dim db As Database = DatabaseFactory.CreateDatabase() Using cmd As DbCommand = db.GetStoredProcCommand(\u0022CORPHIER_PKG.get_job_no\u0022) db.AddParameter(cmd, \u0022retval\u0022, DbType.Int32, 0, ParameterDirection.ReturnValue, True, 0, 0, String.Empty, DataRowVersion.Current, Convert.DBNull) db.ExecuteNonQuery(cmd) Return db.GetParameterValue(cmd, \u0022retval\u0022) End Using End Function"
+  },
+  {
+    "id": 65,
+    "question": "Does TextMate have a \u0022jump back\u0022 key binding?",
+    "style": "keyword",
+    "expectedPostId": 413330,
+    "originalTitle": "Fastest way to \u0022jump back\u0022 to a file in TextMate?",
+    "referenceAnswer": "It\u0027s subtle. The command-T thing has the files listed in Most Recently Used order. So, you can go command-T return to get back to your last file real quick. At first I couldn\u0027t find it either. I don\u0027t think there\u0027s a go to last edit location as there is in, say, IDEA/RubyMine."
+  },
+  {
+    "id": 66,
+    "question": "How do I handle XML with generics in C#?",
+    "style": "vague",
+    "expectedPostId": 416980,
+    "originalTitle": "XmlSerializer, sgen.exe and generics",
+    "referenceAnswer": "Yes, you can implement a custom class directly with IXmlSerializable. For more information, see this article."
+  },
+  {
+    "id": 67,
+    "question": "How can I check if a value exists in a collection using LINQ?",
+    "style": "specific",
+    "expectedPostId": 423840,
+    "originalTitle": "In statement for LINQ to objects",
+    "referenceAnswer": "Yes - Contains. var desiredNames = new[] { \u0022Jon\u0022, \u0022Marc\u0022 }; var people = new[] { new { FirstName=\u0022Jon\u0022, Surname=\u0022Skeet\u0022 }, new { FirstName=\u0022Marc\u0022, Surname=\u0022Gravell\u0022 }, new { FirstName=\u0022Jeff\u0022, Surname=\u0022Atwood\u0022 } }; var matches = people.Where(person =\u003E desiredNames.Contains(person.FirstName)); foreach (var person in matches) { Console.WriteLine(person); } (In LINQ to SQL this ends up as an \u0022IN\u0022 query.) Note that in LINQ to Objects the above isn\u0027t really very efficient. You\u0027d be better off with a join: var matches = from person in people join name in desiredNames on person.FirstName equals name select person; (This could still be done with dot notation of course, but it ends up being somewhat messier.)"
+  },
+  {
+    "id": 68,
+    "question": "What placeholder names do you use when foo and bar aren\u0027t enough?",
+    "style": "keyword",
+    "expectedPostId": 424580,
+    "originalTitle": "When foo and bar is not enough",
+    "referenceAnswer": "If an example is that complex, it would probably be easier to understand if you just used real variable names."
+  },
+  {
+    "id": 69,
+    "question": "Why is Entity Framework hard for testing?",
+    "style": "vague",
+    "expectedPostId": 430300,
+    "originalTitle": "How does Microsoft\u0027s Entity Framework inhibit test driven development?",
+    "referenceAnswer": "It\u0027s because it has no mocks - it encourages you to base your app around objects that directly ping the database, with no way to simulate it. One of the primary tenets of agile development is that tests are fast, so that running them is painless and you can continually be testing your code, but with EF, your objects always ping a database and you have to do horrible hacks to get around the generated code that EF makes for you for tests."
+  },
+  {
+    "id": 70,
+    "question": "How can I send updates for multiple related items in a web application?",
+    "style": "specific",
+    "expectedPostId": 446760,
+    "originalTitle": "How to submit multiple models on rails using flex?",
+    "referenceAnswer": "Actually I have it. Forget using those parameters objects and use only XML, its easier than those parameters objects and you can have a single way to serialize your flex objects. Using XML you just need to build it with the objects nested (like rails does for you). The only issue is that you cannot use too much RESt with flex because flex does not support all HTTP operations, so for doing an update I did a workaround and created a flex_update method on application_controller that is called using POST during an update, this method simple calls the default update method and everything works fine."
+  },
+  {
+    "id": 71,
+    "question": "What version of CE is used by Windows Mobile 6.5?",
+    "style": "keyword",
+    "expectedPostId": 474770,
+    "originalTitle": "What version of CE is Window Mobile 6.5 built on?",
+    "referenceAnswer": "This source indicate that WM6.5 is also based on CE 5.2 (specifically 5.2.21139)."
+  },
+  {
+    "id": 72,
+    "question": "How to limit views from the same IP in ASP.NET?",
+    "style": "vague",
+    "expectedPostId": 476060,
+    "originalTitle": "What do you suggest on how to stop hit counter for the same IP in asp.NET website?",
+    "referenceAnswer": "If it\u0027s a website you can be a little more accurate counting unique visitors by dropping a cookie containing the date \u0026 time. Check the cookie, if it exists and the date is today don\u0027t add one to the counter."
+  },
+  {
+    "id": 73,
+    "question": "Can I manage camera settings through a FireWire connection with any available software?",
+    "style": "specific",
+    "expectedPostId": 477360,
+    "originalTitle": "Control camera via Firewire",
+    "referenceAnswer": "The open source video editor kinoDV does this for all kinds of cameras, including sony. Maybe have a look at the source ?"
+  },
+  {
+    "id": 74,
+    "question": "How to clear file cache on Windows XP and Linux for performance testing?",
+    "style": "keyword",
+    "expectedPostId": 478340,
+    "originalTitle": "Clear file cache to repeat performance testing",
+    "referenceAnswer": "Use SysInternal\u0027s RAMMap app. The Empty / Empty Standby List menu option will clear the Windows file cache."
+  },
+  {
+    "id": 75,
+    "question": "How do I hide a menu item in ASP.NET?",
+    "style": "vague",
+    "expectedPostId": 491670,
+    "originalTitle": "Hide authorized menu item in asp.net web.sitemap",
+    "referenceAnswer": "If this is just a special case for anonymous users, you could create a second SiteMap. Create a new file WebAnon.sitemap. Create a new sitemap provider in the web.config \u003Cadd name=\u0022anonProvider\u0022 type=\u0022System.Web.XmlSiteMapProvider\u0022 siteMapFile=\u0022WebAnon.sitemap\u0022 securityTrimmingEnabled=\u0022true\u0022/\u003E Set the SiteMapDataSource\u0027s SiteMapProvider property to \u0022anonProvider\u0022 in the code behind if its an anonymous user."
+  },
+  {
+    "id": 76,
+    "question": "How can I ensure a list updates correctly after selecting different items?",
+    "style": "specific",
+    "expectedPostId": 496750,
+    "originalTitle": "Refresh NSTableView After Click - Not Refreshing",
+    "referenceAnswer": "Have you tried [tableView reloadData]?"
+  },
+  {
+    "id": 77,
+    "question": "How can I test if IIRF is working correctly?",
+    "style": "keyword",
+    "expectedPostId": 497030,
+    "originalTitle": "How can I test if IIRF works?",
+    "referenceAnswer": "The new version of IIRF, v1.2.16 R3, includes a StatusUrl directive that will give you a status page if you do an HTTP GET on it. It looks like this: If you get that page, then IIRF is running."
+  },
+  {
+    "id": 78,
+    "question": "How to remove rows based on two things in Oracle?",
+    "style": "vague",
+    "expectedPostId": 504060,
+    "originalTitle": "Oracle Delete Rows Matching On Multiple Values",
+    "referenceAnswer": "No, you just need parentheses: DELETE FROM student WHERE (student.course, student.major) IN (SELECT schedule.course, schedule.major FROM schedule)"
+  },
+  {
+    "id": 79,
+    "question": "How can I automate transferring tables from an Access database to SQL Server?",
+    "style": "specific",
+    "expectedPostId": 504330,
+    "originalTitle": "Create \u0026 Copy Access tables to SQL via SSIS? SQL 2008",
+    "referenceAnswer": "SSIS cannot adapt to new tables at runtime. (You can change connections, move a source to a table with a different name, but the same schema) So, it\u0027s not really easy to do what I think you are saying: Upsize an arbitrary set of tables in an Access DB to SQL (mirroring their structure and data, naming, etc), so that I can then write some straight SQL to transform the data into another SQL database or the same part of the database. You can access the SSIS object model from C# and build a package (or modify a template package) programmatically and then execute it. This might offer the best bang for your buck, but the SSIS object model is kind of deep. The SSIS Team blog have finally started putting up examples (a year after I had to figure a lot of this out for myself) There is always the upsizing wizard, and I\u0027m sure there are some third party tools."
+  },
+  {
+    "id": 80,
+    "question": "How to fix \u0022The source of the report definition has not been specified\u0022 exception?",
+    "style": "keyword",
+    "expectedPostId": 507630,
+    "originalTitle": "Reporting Services - Rendering to Excel in C# WinForm",
+    "referenceAnswer": "Use the following param for the 2nd parameter. \u003CDeviceInfo\u003E\u003CToolbar\u003EFalse\u003C/Toolbar\u003E\u003C/DeviceInfo\u003E And you need to setup the report with something like: var MyInfo = MyRS.LoadReport(\u0022/\u0022 \u002B reportPath, null); var ReportDeviceInfo = @\u0022\u003CDeviceInfo\u003E\u003CToolbar\u003EFalse\u003C/Toolbar\u003E\u003C/DeviceInfo\u003E\u0022; String ExtensionValue = String.Empty; String EncodingValue = String.Empty; String MimeTypeValue = String.Empty; Warning[] WarningValue = null; String[] StreamIDsValue = null; var Result = MyRS.Render(\u0022Excel\u0022, ReportDeviceInfo, out ExtensionValue, out EncodingValue, out MimeTypeValue, out WarningValue, out StreamIDsValue);"
+  },
+  {
+    "id": 81,
+    "question": "How do I clear drawing in my iPhone view?",
+    "style": "vague",
+    "expectedPostId": 509790,
+    "originalTitle": "CGContext - is there a way to reset the current context",
+    "referenceAnswer": "You might want to check out CGContextSaveGState(context) and CGContextRestoreGState(context). They will let you push and pop the current state of the context. If your view is getting \u0027mangled\u0027, check your view\u0027s contentMode setting."
+  },
+  {
+    "id": 82,
+    "question": "How can I efficiently count related records without loading all of them?",
+    "style": "specific",
+    "expectedPostId": 509870,
+    "originalTitle": "Better Performance on Associations",
+    "referenceAnswer": "How about: Campaign.find(30).hits.count You might also consider adding the following in hit.rb (assuming a one-to-many relationship between campaigns and hits). belongs_to :campaign, :counter_cache =\u003E true You then need a column in the campaigns table called hits_count. This will avoid hitting hits altogether if you\u0027re only getting the count. You can check the API for the full rundown."
+  },
+  {
+    "id": 83,
+    "question": "How to test method with DI mocked Stream in Initialize?",
+    "style": "keyword",
+    "expectedPostId": 509910,
+    "originalTitle": "Testing IO.Stream interaction",
+    "referenceAnswer": "If you just want a way to pass in a \u0022fake\u0022 upload, you could construct a MemoryStream in your test harness and pass that in."
+  },
+  {
+    "id": 84,
+    "question": "How to tell what language text is in PHP?",
+    "style": "vague",
+    "expectedPostId": 512580,
+    "originalTitle": "Language detection in PHP ( UTF-8 )",
+    "referenceAnswer": "Pipe your text through Google\u0027s language detection. You can do this via AJAX. Here is the documentation/developer\u0027s guide. For example: \u003Chtml\u003E \u003Chead\u003E \u003Cscript type=\u0022text/javascript\u0022 src=\u0022http://www.google.com/jsapi\u0022\u003E\u003C/script\u003E \u003Cscript type=\u0022text/javascript\u0022\u003E google.load(\u0022language\u0022, \u00221\u0022); function initialize() { var text = document.getElementById(\u0022text\u0022).innerHTML; google.language.detect(text, function(result) { if (!result.error \u0026\u0026 result.language) { google.language.translate(text, result.language, \u0022en\u0022, function(result) { var translated = document.getElementById(\u0022translation\u0022); if (result.translation) { translated.innerHTML = result.translation; } }); } }); } google.setOnLoadCallback(initialize); \u003C/script\u003E \u003C/head\u003E \u003Cbody\u003E \u003Cdiv id=\u0022text\u0022\u003E\u4F60\u597D\uFF0C\u5F88\u9AD8\u8208\u898B\u5230\u4F60\u3002\u003C/div\u003E \u003Cdiv id=\u0022translation\u0022\u003E\u003C/div\u003E \u003C/body\u003E \u003C/html\u003E"
+  },
+  {
+    "id": 85,
+    "question": "Where is the ideal location to host reporting services in a dual-server setup?",
+    "style": "specific",
+    "expectedPostId": 516630,
+    "originalTitle": "Best practice for running SQL Server reporting services. Should I run on the database or web server?",
+    "referenceAnswer": "Depends... The reporting services rendering is fairly processor intensive so you need to keep that in mind. Typically if I\u0027m designing a system with heavy load or throughput requirements I place the reporting services instance on its own server. The best practice is really dependent on the complexity of your system. If a third server is not an option and the two servers you already have are similarly speced I would probably place it on the one with the lowest processor load. If you place the reporting server on the web server make sure that Reporting services uses your dedicated database server for the reporting services meta-data so that you don\u0027t have to install the RDBMS on both machines. You need to keep in mind that if you don\u0027t place the reporting server on the same box as SQL server you will need another SQL Server license. The product is only \u0022free\u0022 if it is installed on the same machine as SQL."
+  },
+  {
+    "id": 86,
+    "question": "How to ensure consistent ORDER BY results in MSSQL with similar values?",
+    "style": "keyword",
+    "expectedPostId": 519300,
+    "originalTitle": "MSSQL Paging is returning random rows when not supposed too",
+    "referenceAnswer": "Try ordering by both, e.g.: ORDER BY Rating DESC, DateEdit ASC"
+  },
+  {
+    "id": 87,
+    "question": "How to get info from a website using PHP?",
+    "style": "vague",
+    "expectedPostId": 519920,
+    "originalTitle": "screen scraping technique using php",
+    "referenceAnswer": "Zend_Http_Client and Zend_Dom_Query"
+  },
+  {
+    "id": 88,
+    "question": "What\u0027s the easiest way to add a picture to a text editor control without clipboard issues?",
+    "style": "specific",
+    "expectedPostId": 542850,
+    "originalTitle": "How can I insert an image into a RichTextBox?",
+    "referenceAnswer": "The most straightforward way would be to modify the RTF code to insert the picture yourself. In RTF, a picture is defined like this: \u0027{\u0027 \\pict (brdr? \u0026 shading? \u0026 picttype \u0026 pictsize \u0026 metafileinfo?) data \u0027}\u0027 A question mark indicates the control word is optional. \u0022data\u0022 is simply the content of the file in hex format. If you want to use binary, use the \\bin control word. For instance: {\\pict\\pngblip\\picw10449\\pich3280\\picwgoal5924\\pichgoal1860 hex data} {\\pict\\pngblip\\picw10449\\pich3280\\picwgoal5924\\pichgoal1860\\bin binary data} \\pict = starts a picture group, \\pngblip = png picture \\picwX = width of the picture (X is the pixel value) \\pichX = height of the picture \\picwgoalX = desired width of the picture in twips So, to insert a picture, you just need to open your picture, convert the data to hex, load these data into a string and add the RTF codes around it to define a RTF picture. Now, you have a self contained string with picture data which you can insert in the RTF code of a document. Don\u0027t forget the closing \u0022}\u0022 Next, you get the RTF code from your RichTextBox (rtbBox.Rtf), insert the picture at the proper location, and set the code of rtbBox.Rtf One issue you may run into is that .NET RTB does not have a very good support of the RTF standard. I have just made a small application* which allows you to quickly test some RTF code inside a RTB and see how it handles it. You can download it here: RTB tester (http://your-translations.com/toys). You can paste some RTF content (from Word, for instance) into the left RTF box and click on the \u0022Show RTF codes\u0022 to display the RTF codes in the right RTF box, or you can paste RTF code in the right RTB and click on \u0022Apply RTF codes\u0022 to see the results on the left hand side. You can of course edit the codes as you like, which makes it quite convenient for testing whether or not the RichTextBox supports the commands you need, or learn how to use the RTF control words. You can download a full specification for RTF online. NB It\u0027s just a little thing I slapped together in 5 minutes, so I didn\u0027t implement file open or save, drag and drop, or other civilized stuff."
+  },
+  {
+    "id": 89,
+    "question": "How to fix \u0022event is not defined\u0022 in onlyNumeric() for Firefox?",
+    "style": "keyword",
+    "expectedPostId": 553240,
+    "originalTitle": "event is not defined in mozilla firefox for javascript function?",
+    "referenceAnswer": "In FF/Mozilla the event is passed to your event handler as a parameter. Use something like the following to get around the missing event argument in IE. function onlyNumeric(e) { if (!e) { e = window.event; } ... } You\u0027ll find that there are some other differences between the two as well. This link has some information on how to detect which key is pressed in a cross-browser way."
+  },
+  {
+    "id": 90,
+    "question": "How can I check my app\u0027s speed in Visual Studio?",
+    "style": "vague",
+    "expectedPostId": 573050,
+    "originalTitle": "How To Do Performance Profiling in Visual Studio 2008 \u0022Pro\u0022",
+    "referenceAnswer": "There are a couple of free profilers, not as complete or polished as the commercial ones, but they can definately help a lot: Eqatec - This was designed for Windows CE, but works just fine for normal applications. Soft Prodigy Profile Sharp - This is actually an open source project written in c#, so you can tinker with it if you want."
+  },
+  {
+    "id": 91,
+    "question": "How can I ensure proper authorization headers are sent on the initial request?",
+    "style": "specific",
+    "expectedPostId": 581090,
+    "originalTitle": "How do I stop 401 responses from TFS 2008",
+    "referenceAnswer": "This is how the process of Windows Integrated Authentication (NTLM) works. NTLM is a connection based authentication mechanism and actually involves 3 calls to establish the authenticated session. The TFS API then goes to extra-ordinary lengths to make sure that this handshake is done in the most efficient way possible. It will keep the authenticated connection open for a period of time to avoid this hand-shake where possible. It will also do the initial authentication using a HTTP payload with minimal content and then send the real message if the message you were going to send is over a certain length. It does a bunch of other tricks as well to optimise the connection to TFS. Basically, I would just leave it alone as it works well."
+  },
+  {
+    "id": 92,
+    "question": "How to access SVN using VBScript to copy latest files?",
+    "style": "keyword",
+    "expectedPostId": 585640,
+    "originalTitle": "how to access SVN using VBScript",
+    "referenceAnswer": "So long as svn is in your path... Set objShell = WScript.CreateObject(\u0022WScript.shell\u0022) objShell.exec (\u0022cmd svn update C:\\Projects\\Project1 --username buildrobot --password IAmARobot1\u0022)"
+  },
+  {
+    "id": 93,
+    "question": "Do I need a new socket thing for each user?",
+    "style": "vague",
+    "expectedPostId": 599700,
+    "originalTitle": "Do i need one SocketAsyncEventArgs for each client connection made?",
+    "referenceAnswer": "This question is slightly old but it\u0027s still relevant in my opinion. I suggest the following links for reference: How to use the SocketAsyncEventArgs class SocketAsyncEventArgs Class I do recommend the codeproject link as the server implements a SocketAsyncEventArgs pool (which answers your question). Do note however that that code has issues that need to be resolved."
+  },
+  {
+    "id": 94,
+    "question": "Should I use global variables or a class for managing application state?",
+    "style": "specific",
+    "expectedPostId": 600190,
+    "originalTitle": "Python: Choosing between modules and classes",
+    "referenceAnswer": "Sounds like the classic conundrum :-) In Python, there\u0027s nothing dirty or shameful about choosing to use a module if that\u0027s the best approach. After all, modules, functions, and the like are, in fact, first-class citizens in the language, and offer introspection and other properties that many other languages use objects to obtain. The way you\u0027ve described your options, it kinda sounds like you\u0027re not too crazy about a class-based approach in this case. I don\u0027t know if you\u0027ve used the Django framework, but if not have a look at their documentation on how they handle settings. These are app-wide, they are defined in a module, and they are available gobally. The way they parse the options and expose them globally is quite elegant, and you may find such an approach inspiring for your needs."
+  },
+  {
+    "id": 95,
+    "question": "How to serialize ActionScript classes to binary data in Flex?",
+    "style": "keyword",
+    "expectedPostId": 603890,
+    "originalTitle": "Serialize Flex Objects to Save/Restore Application State",
+    "referenceAnswer": "Take a look at ByteArray.writeObject(). which saves the passed object in AMF format into the byte array. I have not used this function too much, I don\u0027t exactly know what kind of objects it can serialize, but definitely not all."
+  },
+  {
+    "id": 96,
+    "question": "Can I use EJB in a servlet safely?",
+    "style": "vague",
+    "expectedPostId": 618440,
+    "originalTitle": "Is it safe to inject an EJB into a servlet as an instance variable?",
+    "referenceAnswer": "It is safe to inject an EJB in a Servlet as a Servlet instance variable, as long as the EJB is Stateless. You MUST NEVER inject a Stateful Bean in a Servlet. You must implement your EJB stateless in that it doesn\u0027t hold any instance variable which itself holds a stateful value (like Persistence Context). If you need to use the persistence context, then you must get an instance of it IN the methods of the EJB. You can do that by having a PersistenceContextFactory as a EJB instance Variable and then you get an instance of the entity manager from the Factory in the method of the EJB. The PersistenceContextFactory is thread-safe, thus it can be injected in an instance variable. As long as you comply to the above mentioned rules, it should be thread-safe to inject a Stateless Bean in a Servlet"
+  },
+  {
+    "id": 97,
+    "question": "How can I allow specific functions in my web service to handle HTTP POST and GET?",
+    "style": "specific",
+    "expectedPostId": 618900,
+    "originalTitle": "Enable ASP.NET ASMX web service for HTTP POST / GET requests",
+    "referenceAnswer": "Try to declare UseHttpGet over your method. [ScriptMethod(UseHttpGet = true)] public string HelloWorld() { return \u0022Hello World\u0022; }"
+  },
+  {
+    "id": 98,
+    "question": "Why can\u0027t Castle Windsor find Test.Services.IParse in app.config?",
+    "style": "keyword",
+    "expectedPostId": 624310,
+    "originalTitle": "Castle Windsor Cannot find my Service Type",
+    "referenceAnswer": "Stupid question, but are you certain that the assembly containing the class you register gets actually copied to the output directory?"
+  },
+  {
+    "id": 99,
+    "question": "How to add a slash in Grails links?",
+    "style": "vague",
+    "expectedPostId": 631490,
+    "originalTitle": "Grails UrlMappings with URL-pattern ending with \u0022/\u0022",
+    "referenceAnswer": "Unfortunately this is not possible with Grails\u0027 default URL mapping. Slashes are handled in a special way. And this behaviour is hard-coded in the Grails core. It could be overridden using a plugin though. As a workaround (probably not applicable) I can provide to use it that way: \u003Cg:link uri=\u0022/foobar/\u0022\u003EFoo Link\u003C/g:link\u003E This should produce a link with a trailing slash."
+  },
+  {
+    "id": 100,
+    "question": "Is there a web tool for editing resource files directly on a live site?",
+    "style": "specific",
+    "expectedPostId": 632290,
+    "originalTitle": "Web-based .resx file editor?",
+    "referenceAnswer": "I used the one you found: http://blog.lavablast.com/post/2008/02/RESX-file-Web-Editor.aspx It took a couple of hours but it works a treat. I think that having the multiple languages editable at the same time is very helpful to avoid getting your resx files out of sync, and to see blank entries easily."
+  }
+]
