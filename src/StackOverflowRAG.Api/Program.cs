@@ -12,6 +12,7 @@ using StackOverflowRAG.Core.Services;
 using StackOverflowRAG.Data.Parsers;
 using StackOverflowRAG.Data.Repositories;
 using StackOverflowRAG.Data.Services;
+using StackOverflowRAG.Data.Utilities;
 
 #pragma warning disable SKEXP0001 // Type is for evaluation purposes only
 #pragma warning disable SKEXP0010 // Type is for evaluation purposes only
@@ -156,7 +157,11 @@ if (openAiOptions != null && !string.IsNullOrWhiteSpace(openAiOptions.ApiKey))
 
     builder.Services.AddSingleton(llmKernel);
     builder.Services.AddSingleton<ILlmService, LlmService>();
+    builder.Services.AddSingleton<IEvalService, EvalService>();
 }
+
+builder.Services.Configure<EvalOptions>(
+    builder.Configuration.GetSection(EvalOptions.SectionName));
 
 // Configure and register Redis cache service
 builder.Services.Configure<RedisOptions>(
@@ -247,6 +252,10 @@ app.MapPost("/ingest", async (
 
         return Results.Ok(result);
     }
+    catch (InvalidOperationException ex)
+    {
+        return Results.Problem(title: "Ingestion already running", detail: ex.Message, statusCode: 409);
+    }
     catch (Exception ex)
     {
         return Results.Problem(
@@ -271,6 +280,36 @@ app.MapPost("/ingest", async (
 
     return operation;
 });
+
+// Ingestion status - how many chunks are in the vector store (0 before the first ingestion)
+app.MapGet("/ingest/status", async (
+    IVectorStoreRepository? vectorStore,
+    IIngestionService? ingestionService,
+    CancellationToken cancellationToken) =>
+{
+    if (vectorStore == null)
+    {
+        return Results.Problem(
+            title: "Vector store not available",
+            detail: "Qdrant is not configured.",
+            statusCode: 503);
+    }
+
+    try
+    {
+        var chunkCount = await vectorStore.GetCountAsync(cancellationToken);
+        return Results.Ok(new { chunkCount, progress = ingestionService?.GetProgress() });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: "Status check failed",
+            detail: ex.Message,
+            statusCode: 500);
+    }
+})
+.WithName("IngestStatus")
+.WithDescription("Returns the number of chunks in Qdrant and the progress of the current or last ingestion");
 
 // Compare endpoint - shows hybrid vs vector-only side-by-side
 app.MapGet("/search/compare", async (
@@ -371,7 +410,7 @@ app.MapGet("/search", async (
     IRetrievalService retrievalService,
     string query,
     int topK = 5,
-    bool useHybrid = true,
+    bool useHybrid = false,
     CancellationToken cancellationToken = default) =>
 {
     try
@@ -422,132 +461,7 @@ app.MapGet("/search", async (
     operation.Parameters[1].Description = "Number of results to return (default: 5)";
     operation.Parameters[1].Example = new Microsoft.OpenApi.Any.OpenApiInteger(5);
 
-    operation.Parameters[2].Description = "Use hybrid search (BM25 + vector) or vector-only (default: true)";
-    operation.Parameters[2].Example = new Microsoft.OpenApi.Any.OpenApiBoolean(true);
-
-    return operation;
-});
-
-// Ask endpoint - full RAG pipeline with streaming, caching, and citations (Story 2.5)
-app.MapGet("/ask", async (
-    IRetrievalService retrievalService,
-    ILlmService llmService,
-    ICacheService? cacheService,
-    string question,
-    int topK = 5,
-    bool useHybrid = true,
-    CancellationToken cancellationToken = default) =>
-{
-    if (string.IsNullOrWhiteSpace(question))
-    {
-        return Results.BadRequest(new { error = "Question parameter is required" });
-    }
-
-    try
-    {
-        // Generate cache key for response
-        var cacheKey = CacheKeyHelper.GenerateResponseKey(question, topK, useHybrid);
-
-        // Check cache first
-        string? cachedResponse = null;
-        if (cacheService != null)
-        {
-            cachedResponse = await cacheService.GetAsync(cacheKey, cancellationToken);
-        }
-
-        if (cachedResponse != null)
-        {
-            // Cache hit - stream from cache
-            return Results.Stream(async responseStream =>
-            {
-                await using var writer = new StreamWriter(responseStream, leaveOpen: true);
-                await writer.WriteAsync(cachedResponse);
-                await writer.FlushAsync();
-            }, "text/event-stream");
-        }
-
-        // Cache miss - retrieve chunks and generate response
-        var chunks = useHybrid
-            ? await retrievalService.HybridSearchAsync(question, topK, useHybrid, cancellationToken)
-            : await retrievalService.SearchAsync(question, topK, cancellationToken);
-
-        if (chunks.Count == 0)
-        {
-            return Results.Ok(new
-            {
-                question,
-                answer = "I couldn't find any relevant information in the Stack Overflow database to answer your question.",
-                citations = Array.Empty<object>()
-            });
-        }
-
-        var citations = CitationHelper.ExtractCitations(chunks, maxCitations: 5);
-
-        // Stream response and accumulate for caching
-        return Results.Stream(async responseStream =>
-        {
-            await using var writer = new StreamWriter(responseStream, leaveOpen: true);
-            var responseBuilder = new System.Text.StringBuilder();
-
-            // Write metadata
-            var metadataLine = $"data: {{\"type\":\"metadata\",\"question\":\"{question}\",\"chunkCount\":{chunks.Count},\"searchType\":\"{(useHybrid ? "hybrid" : "vector-only")}\",\"cached\":false}}\n";
-            await writer.WriteLineAsync(metadataLine);
-            await writer.FlushAsync();
-            responseBuilder.AppendLine(metadataLine);
-
-            // Stream LLM response
-            await foreach (var chunk in llmService.StreamAnswerAsync(question, chunks, cancellationToken))
-            {
-                var textLine = $"data: {{\"type\":\"text\",\"content\":\"{chunk.Replace("\"", "\\\"").Replace("\n", "\\n")}\"}}\n\n";
-                await writer.WriteAsync(textLine);
-                await writer.FlushAsync();
-                responseBuilder.Append(textLine);
-            }
-
-            // Send citations
-            var citationsJson = System.Text.Json.JsonSerializer.Serialize(citations);
-            var citationsLine = $"data: {{\"type\":\"citations\",\"sources\":{citationsJson}}}\n";
-            await writer.WriteLineAsync(citationsLine);
-            await writer.FlushAsync();
-            responseBuilder.AppendLine(citationsLine);
-
-            // Send completion marker
-            var doneLine = "data: {\"type\":\"done\"}\n";
-            await writer.WriteLineAsync(doneLine);
-            await writer.FlushAsync();
-            responseBuilder.AppendLine(doneLine);
-
-            // Cache the complete response
-            if (cacheService != null)
-            {
-                var redisOptions = builder.Configuration.GetSection(RedisOptions.SectionName).Get<RedisOptions>();
-                var ttl = redisOptions?.GetTtl() ?? TimeSpan.FromHours(24);
-                await cacheService.SetAsync(cacheKey, responseBuilder.ToString(), ttl, cancellationToken);
-            }
-        }, "text/event-stream");
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem(
-            title: "Ask failed",
-            detail: ex.Message,
-            statusCode: 500);
-    }
-})
-.WithName("AskGet")
-.WithDescription("Full RAG pipeline: retrieves context, streams LLM answer with Redis caching, and provides citations (GET version)")
-.WithOpenApi(operation =>
-{
-    operation.Summary = "Ask a question (GET with streaming)";
-
-    // Add parameter descriptions
-    operation.Parameters[0].Description = "Question to ask (e.g., 'What is the best way to handle async/await in JavaScript?')";
-    operation.Parameters[0].Example = new Microsoft.OpenApi.Any.OpenApiString("What is the best way to handle async/await in JavaScript?");
-
-    operation.Parameters[1].Description = "Number of context chunks to retrieve (default: 5)";
-    operation.Parameters[1].Example = new Microsoft.OpenApi.Any.OpenApiInteger(5);
-
-    operation.Parameters[2].Description = "Use hybrid search for context retrieval (default: true)";
+    operation.Parameters[2].Description = "Use hybrid search (BM25 + vector) or vector-only (default: false)";
     operation.Parameters[2].Example = new Microsoft.OpenApi.Any.OpenApiBoolean(true);
 
     return operation;
@@ -571,7 +485,7 @@ app.MapPost("/ask", async (
     try
     {
         // Generate cache key
-        var cacheKey = CacheKeyHelper.GenerateResponseKey(request.Question, request.TopK, request.UseHybrid);
+        var cacheKey = CacheKeyHelper.GenerateResponseKey(request.Question, request.TopK, request.UseHybrid, request.UseMultiQuery);
 
         // Check cache
         string? cachedResponse = null;
@@ -589,7 +503,14 @@ app.MapPost("/ask", async (
                 await using var writer = new StreamWriter(responseStream, leaveOpen: true);
 
                 // Add cache hit metadata marker
-                await writer.WriteLineAsync($"data: {{\"type\":\"metadata\",\"question\":\"{request.Question}\",\"cacheHit\":true,\"latencyMs\":{startTime.ElapsedMilliseconds}}}\n");
+                var cacheHitMetadata = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    type = "metadata",
+                    question = request.Question,
+                    cacheHit = true,
+                    latencyMs = startTime.ElapsedMilliseconds
+                });
+                await writer.WriteLineAsync($"data: {cacheHitMetadata}\n");
                 await writer.FlushAsync();
 
                 // Stream cached content (skip first metadata line and final_metadata from cache)
@@ -620,9 +541,13 @@ app.MapPost("/ask", async (
         }
 
         // Cache miss - full pipeline
-        var chunks = request.UseHybrid
-            ? await retrievalService.HybridSearchAsync(request.Question, request.TopK, request.UseHybrid, cancellationToken)
-            : await retrievalService.SearchAsync(request.Question, request.TopK, cancellationToken);
+        var expansion = request.UseMultiQuery
+            ? await llmService.ExpandQueryAsync(request.Question, cancellationToken: cancellationToken)
+            : null;
+        var chunks = expansion != null
+            ? await retrievalService.MultiQuerySearchAsync(
+                [request.Question, .. expansion.Queries], request.TopK, request.UseHybrid, cancellationToken)
+            : await retrievalService.HybridSearchAsync(request.Question, request.TopK, request.UseHybrid, cancellationToken);
 
         if (chunks.Count == 0)
         {
@@ -645,19 +570,28 @@ app.MapPost("/ask", async (
 
             // Build prompt for token estimation
             var promptText = $"Context: {string.Join(" ", chunks.Select(c => c.ChunkText))}\nQuestion: {request.Question}";
-            var promptTokens = CostEstimator.EstimateTokens(promptText);
+            var promptTokens = TokenCounter.CountChatTokens(promptText);
 
             // Write initial metadata
-            var metadataLine = $"data: {{\"type\":\"metadata\",\"question\":\"{request.Question}\",\"chunkCount\":{chunks.Count},\"searchType\":\"{(request.UseHybrid ? "hybrid" : "vector-only")}\",\"cacheHit\":false}}\n";
+            var metadataJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                type = "metadata",
+                question = request.Question,
+                chunkCount = chunks.Count,
+                searchType = request.UseHybrid ? "hybrid" : "vector-only",
+                searchedQueries = expansion?.Queries,
+                cacheHit = false
+            });
+            var metadataLine = $"data: {metadataJson}\n";
             await writer.WriteLineAsync(metadataLine);
             await writer.FlushAsync();
             responseBuilder.AppendLine(metadataLine);
 
             // Stream LLM response
-            await foreach (var chunk in llmService.StreamAnswerAsync(request.Question, chunks, cancellationToken))
+            await foreach (var chunk in llmService.StreamAnswerAsync(request.Question, chunks, cancellationToken: cancellationToken))
             {
                 answerBuilder.Append(chunk);
-                var textLine = $"data: {{\"type\":\"text\",\"content\":\"{chunk.Replace("\"", "\\\"").Replace("\n", "\\n")}\"}}\n\n";
+                var textLine = $"data: {System.Text.Json.JsonSerializer.Serialize(new { type = "text", content = chunk })}\n\n";
                 await writer.WriteAsync(textLine);
                 await writer.FlushAsync();
                 responseBuilder.Append(textLine);
@@ -672,7 +606,11 @@ app.MapPost("/ask", async (
 
             // Calculate final metadata
             startTime.Stop();
-            var completionTokens = CostEstimator.EstimateTokens(answerBuilder.ToString());
+            var completionTokens = TokenCounter.CountChatTokens(answerBuilder.ToString());
+
+            // The multi-query rewrite is a separate LLM call; its tokens count toward this answer's cost.
+            promptTokens += expansion?.PromptTokens ?? 0;
+            completionTokens += expansion?.CompletionTokens ?? 0;
             var totalTokens = promptTokens + completionTokens;
             var estimatedCost = CostEstimator.EstimateLlmCost(promptTokens, completionTokens);
 
@@ -727,7 +665,8 @@ app.MapPost("/ask", async (
     {
         ["question"] = new Microsoft.OpenApi.Any.OpenApiString("What is the best way to handle async/await in JavaScript?"),
         ["topK"] = new Microsoft.OpenApi.Any.OpenApiInteger(5),
-        ["useHybrid"] = new Microsoft.OpenApi.Any.OpenApiBoolean(true)
+        ["useHybrid"] = new Microsoft.OpenApi.Any.OpenApiBoolean(false),
+        ["useMultiQuery"] = new Microsoft.OpenApi.Any.OpenApiBoolean(false)
     };
 
     return operation;
@@ -865,6 +804,73 @@ app.MapPost("/tags/train", async (
 
     return operation;
 });
+
+// Evals - fixed test set scored on retrieval (Hit@K, MRR) and answers (LLM judge)
+var evalsUnavailable = Results.Problem(
+    title: "Evals not available",
+    detail: "Evals require an OpenAI API key and Qdrant.",
+    statusCode: 503);
+
+app.MapGet("/evals/dataset", async (IEvalService? evalService, CancellationToken cancellationToken) =>
+    evalService == null
+        ? evalsUnavailable
+        : Results.Ok(await evalService.GetDatasetAsync(cancellationToken)))
+.WithName("GetEvalDataset")
+.WithDescription("Returns the saved eval test set");
+
+app.MapPost("/evals/dataset", async (IEvalService? evalService, CancellationToken cancellationToken) =>
+{
+    if (evalService == null) return evalsUnavailable;
+
+    try
+    {
+        return Results.Ok(await evalService.GenerateDatasetAsync(cancellationToken));
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(title: "Generating test set failed", detail: ex.Message, statusCode: 500);
+    }
+})
+.WithName("GenerateEvalDataset")
+.WithDescription("Samples ingested posts and rewrites them into test questions, replacing the saved test set");
+
+app.MapPost("/evals/runs", async (IEvalService? evalService, EvalRunRequest request, CancellationToken cancellationToken) =>
+{
+    if (evalService == null) return evalsUnavailable;
+
+    if (request.Size < 1 || request.TopK < 1 || request.TopK > 20)
+    {
+        return Results.BadRequest(new { error = "Size must be at least 1 and TopK between 1 and 20" });
+    }
+
+    try
+    {
+        return Results.Ok(await evalService.RunAsync(request, cancellationToken));
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(title: "Eval run failed", detail: ex.Message, statusCode: 500);
+    }
+})
+.WithName("RunEval")
+.WithDescription("Runs the first N test questions through retrieval, answering and judging");
+
+app.MapGet("/evals/runs", async (IEvalService? evalService, CancellationToken cancellationToken) =>
+    evalService == null
+        ? evalsUnavailable
+        : Results.Ok(await evalService.ListRunsAsync(cancellationToken)))
+.WithName("ListEvalRuns")
+.WithDescription("Lists saved eval runs, newest first, without per-question results");
+
+app.MapGet("/evals/runs/{id}", async (IEvalService? evalService, string id, CancellationToken cancellationToken) =>
+{
+    if (evalService == null) return evalsUnavailable;
+
+    var run = await evalService.GetRunAsync(id, cancellationToken);
+    return run == null ? Results.NotFound() : Results.Ok(run);
+})
+.WithName("GetEvalRun")
+.WithDescription("Returns one eval run with per-question results");
 
 // Initialize tag suggestion service on startup
 var tagService = app.Services.GetService<ITagSuggestionService>();

@@ -51,6 +51,7 @@ docker compose ps
 - **Swagger UI:** http://localhost:5000/swagger
 - **Health Check:** http://localhost:5000/health
 - **Qdrant Dashboard:** http://localhost:6333/dashboard
+- **Chat UI:** http://localhost:5173 after `cd web && npm install && npm run dev` (see `web/README.md`)
 
 ### 4. Ingest Data
 
@@ -65,23 +66,23 @@ Then POST to `/ingest` via Swagger UI at http://localhost:5000/swagger
 
 ## Environment Variables
 
-Configure these in your `.env` file:
+Configure these in your `.env` file. Names follow .NET's `Section__Property` convention, so they map onto the options classes in `src/StackOverflowRAG.Core/Configuration/` (and can equally be set in `appsettings.json`).
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key (required) | - |
-| `OPENAI_EMBEDDING_MODEL` | Embedding model | `text-embedding-3-small` |
-| `OPENAI_COMPLETION_MODEL` | LLM model | `gpt-4o-mini` |
-| `QDRANT_HOST` | Qdrant endpoint | `http://localhost:6333` |
-| `REDIS_CONNECTION_STRING` | Redis connection | `localhost:6379` |
-| `REDIS_CACHE_TTL_HOURS` | Cache TTL | `24` |
-| `CSV_BASE_PATH` | Directory containing Questions.csv, Answers.csv, Tags.csv | `C:\Users\Nicky\Documents\kaggle\stacksample` |
-| `MAX_ROWS` | Max questions to ingest | `10000` |
-| `CHUNK_SIZE` | Tokens per chunk | `500` |
-| `CHUNK_OVERLAP` | Overlap between chunks | `50` |
-| `DEFAULT_TOP_K` | Chunks to retrieve | `10` |
-| `VECTOR_WEIGHT` | Vector search weight | `0.5` |
-| `KEYWORD_WEIGHT` | Keyword search weight | `0.5` |
+| `OpenAI__ApiKey` | OpenAI API key (required) | - |
+| `OpenAI__EmbeddingModel` | Embedding model | `text-embedding-3-small` |
+| `Llm__ModelName` | Chat completion model | `gpt-4o-mini` |
+| `Qdrant__Host` | Qdrant endpoint (REST URL; the client uses gRPC on 6334) | `http://localhost:6333` |
+| `Qdrant__CollectionName` | Qdrant collection | `stackoverflow_chunks` |
+| `Redis__Enabled` | Turn caching on or off | `true` |
+| `Redis__ConnectionString` | Redis connection | `localhost:6379` |
+| `Redis__CacheTtlHours` | Cache TTL | `24` |
+| `Ingestion__CsvPath` | Directory containing Questions.csv, Answers.csv, Tags.csv | `./data/stacksample.csv` |
+| `Ingestion__MaxRows` | Max questions to ingest | `10000` |
+| `Ingestion__ChunkSize` | Tokens per chunk | `500` |
+| `Ingestion__ChunkOverlap` | Overlap between chunks | `50` |
+| `Retrieval__DefaultTopK` | Chunks to retrieve | `10` |
 
 ## API Endpoints
 
@@ -153,7 +154,7 @@ StackOverflowRAG/
 │   ├── StackOverflowRAG.Data/         # Data models and repositories
 │   ├── StackOverflowRAG.ML/           # ML.NET tag suggestion
 │   └── StackOverflowRAG.Tests/        # Unit and integration tests
-├── docs/                               # Documentation (PRD, architecture, stories)
+├── web/                                # React chat UI
 ├── docker-compose.yml                  # Service orchestration
 ├── Dockerfile                          # API container definition
 ├── .env.example                        # Environment variable template
@@ -203,8 +204,6 @@ This is a **learning project** demonstrating:
 - Semantic Kernel (official Microsoft LLM library)
 - ML.NET (pure .NET, no microservice complexity)
 - Swagger (zero-effort UI for testing)
-
-See `docs/architecture/technical-decisions.md` for detailed rationale.
 
 ## Performance Metrics
 
@@ -277,14 +276,6 @@ This project demonstrates:
 - **Simple chunking** (fixed size, no semantic boundaries)
 - **Basic error handling** (focused on happy path)
 - **Manual deployment** (no CI/CD)
-
-## Documentation
-
-- **Project Brief:** `docs/brief.md`
-- **PRD:** `docs/prd.md`
-- **Architecture:** `docs/architecture.md`
-- **Technical Decisions:** `docs/architecture/technical-decisions.md`
-- **User Stories:** `docs/stories/README.md`
 
 ## License
 

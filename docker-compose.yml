@@ -17,6 +17,8 @@ services:
       # Qdrant Configuration (container network - use service name)
       - Qdrant__Host=http://qdrant:6333
       - Qdrant__CollectionName=${Qdrant__CollectionName:-stackoverflow_chunks}
+      # Redis Configuration (container network - use service name)
+      - Redis__ConnectionString=redis:6379
       # Ingestion Configuration
       - Ingestion__CsvPath=/data/stacksample
       - Ingestion__MaxRows=${Ingestion__MaxRows:-10000}
@@ -24,6 +26,7 @@ services:
       - Ingestion__ChunkOverlap=${Ingestion__ChunkOverlap:-50}
     volumes:
       - ./data:/data:ro
+      - ./evals:/app/evals  # eval test set and run results, versioned in git
     depends_on:
       - qdrant
       - redis
@@ -32,7 +35,7 @@ services:
     restart: unless-stopped
 
   qdrant:
-    image: qdrant/qdrant:v1.7.4
+    image: qdrant/qdrant:v1.15.5  # 1.10+ needed for BM25 (sparse vectors with IDF) and RRF queries; matches Qdrant.Client 1.15
     container_name: stackoverflow-rag-qdrant
     ports:
       - "6333:6333"
@@ -47,7 +50,7 @@ services:
     image: redis:7.2-alpine
     container_name: stackoverflow-rag-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"  # host 6380 avoids clashing with other local Redis instances
     volumes:
       - redis_data:/data
     networks:

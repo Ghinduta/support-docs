@@ -1,33 +1,45 @@
 using System.Text.RegularExpressions;
+using Microsoft.ML.Tokenizers;
 
 namespace StackOverflowRAG.Data.Utilities;
 
 /// <summary>
-/// Utility for estimating token counts in text.
-/// Uses approximation: ~4 characters per token (OpenAI standard).
+/// Counts tokens exactly the way OpenAI does, using the tiktoken encodings of the models this app calls.
 /// </summary>
 public static class TokenCounter
 {
-    /// <summary>
-    /// Average characters per token for OpenAI models
-    /// </summary>
-    private const double CharsPerToken = 4.0;
+    // text-embedding-3-small uses cl100k_base; gpt-4o-mini uses o200k_base.
+    private static readonly Tokenizer EmbeddingTokenizer = TiktokenTokenizer.CreateForEncoding("cl100k_base");
+    private static readonly Tokenizer ChatTokenizer = TiktokenTokenizer.CreateForEncoding("o200k_base");
 
     /// <summary>
-    /// Estimates the number of tokens in a text string.
-    /// Uses approximation: tokenCount ≈ text.Length / 4
+    /// Counts tokens as the embedding model sees them. Used to size chunks.
     /// </summary>
-    /// <param name="text">Text to count tokens in</param>
-    /// <returns>Estimated token count</returns>
-    public static int EstimateTokenCount(string text)
+    public static int CountTokens(string text)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        return string.IsNullOrEmpty(text) ? 0 : EmbeddingTokenizer.CountTokens(text);
+    }
+
+    /// <summary>
+    /// Counts tokens as the chat model sees them. Used for cost estimates.
+    /// </summary>
+    public static int CountChatTokens(string text)
+    {
+        return string.IsNullOrEmpty(text) ? 0 : ChatTokenizer.CountTokens(text);
+    }
+
+    /// <summary>
+    /// Returns the last <paramref name="tokenCount"/> embedding-model tokens of the text.
+    /// </summary>
+    public static string TakeLastTokens(string text, int tokenCount)
+    {
+        if (tokenCount <= 0 || string.IsNullOrEmpty(text))
         {
-            return 0;
+            return string.Empty;
         }
 
-        // Simple approximation: 1 token ≈ 4 characters
-        return (int)Math.Ceiling(text.Length / CharsPerToken);
+        var startIndex = EmbeddingTokenizer.GetIndexByTokenCountFromEnd(text, tokenCount, out _, out _);
+        return text[startIndex..];
     }
 
     /// <summary>

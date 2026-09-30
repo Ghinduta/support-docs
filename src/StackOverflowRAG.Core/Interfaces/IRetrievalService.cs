@@ -25,4 +25,14 @@ public interface IRetrievalService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of relevant chunks with combined scores</returns>
     Task<List<DocumentChunk>> HybridSearchAsync(string query, int topK, bool useHybrid = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Multi-query search: searches each phrasing of the question and merges the result lists with Reciprocal Rank Fusion,
+    /// so chunks found by several phrasings rank highest.
+    /// </summary>
+    /// <param name="queries">The original question plus its alternative phrasings</param>
+    /// <param name="topK">Number of chunks to return</param>
+    /// <param name="useHybrid">Whether each search is hybrid or vector-only</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task<List<DocumentChunk>> MultiQuerySearchAsync(IReadOnlyList<string> queries, int topK, bool useHybrid, CancellationToken cancellationToken = default);
 }

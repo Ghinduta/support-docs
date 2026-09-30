@@ -27,6 +27,7 @@ public interface IEmbeddingService
     /// Generates embeddings for document chunks and populates their Embedding property.
     /// </summary>
     /// <param name="chunks">Chunks to generate embeddings for</param>
+    /// <param name="progress">Receives the number of chunks embedded so far after each batch</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    Task GenerateChunkEmbeddingsAsync(List<DocumentChunk> chunks, CancellationToken cancellationToken = default);
+    Task GenerateChunkEmbeddingsAsync(List<DocumentChunk> chunks, IProgress<int>? progress = null, CancellationToken cancellationToken = default);
 }

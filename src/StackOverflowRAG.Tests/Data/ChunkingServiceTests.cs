@@ -88,7 +88,7 @@ public class ChunkingServiceTests
         // Assert
         foreach (var chunk in chunks)
         {
-            var tokenCount = TokenCounter.EstimateTokenCount(chunk.ChunkText);
+            var tokenCount = TokenCounter.CountTokens(chunk.ChunkText);
             // Allow some flexibility: chunks should be roughly 400-600 tokens
             Assert.InRange(tokenCount, 200, 700);
         }
@@ -167,16 +167,19 @@ public class ChunkingServiceTests
     }
 
     [Fact]
-    public void TokenCounter_EstimatesTokenCount()
+    public void TokenCounter_CountsTokensExactly()
     {
-        // Arrange
-        var text = "This is a test."; // ~15 chars = ~4 tokens
+        // "This", " is", " a", " test", "." in the cl100k_base encoding
+        Assert.Equal(5, TokenCounter.CountTokens("This is a test."));
 
-        // Act
-        var count = TokenCounter.EstimateTokenCount(text);
+        // A character-based estimate (5 chars / 4, rounded up) would say 2
+        Assert.Equal(1, TokenCounter.CountTokens("hello"));
+    }
 
-        // Assert
-        Assert.InRange(count, 3, 5);
+    [Fact]
+    public void TokenCounter_TakeLastTokens_ReturnsTailOfText()
+    {
+        Assert.Equal(" a test.", TokenCounter.TakeLastTokens("This is a test.", 3));
     }
 
     [Fact]

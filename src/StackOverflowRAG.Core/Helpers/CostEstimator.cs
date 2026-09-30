@@ -22,19 +22,4 @@ public static class CostEstimator
         return inputCost + outputCost;
     }
 
-    /// <summary>
-    /// Estimates token count from text (rough approximation: 1 token ≈ 4 characters)
-    /// </summary>
-    /// <param name="text">Text to estimate</param>
-    /// <returns>Estimated token count</returns>
-    public static int EstimateTokens(string text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return 0;
-        }
-
-        // Rough estimation: 1 token ≈ 4 characters for English text
-        return text.Length / 4;
-    }
 }

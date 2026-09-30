@@ -71,7 +71,7 @@ public class OpenAIEmbeddingService : IEmbeddingService
     }
 
     /// <inheritdoc />
-    public async Task GenerateChunkEmbeddingsAsync(List<DocumentChunk> chunks, CancellationToken cancellationToken = default)
+    public async Task GenerateChunkEmbeddingsAsync(List<DocumentChunk> chunks, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
     {
         if (chunks == null || chunks.Count == 0)
         {
@@ -103,6 +103,8 @@ public class OpenAIEmbeddingService : IEmbeddingService
                 {
                     batch[i].Embedding = embeddings[i];
                 }
+
+                progress?.Report(batchIndex * batchSize + batch.Count);
 
                 _logger.LogInformation(
                     "Batch {BatchIndex}/{TotalBatches} completed ({Count} embeddings)",

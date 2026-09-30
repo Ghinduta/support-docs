@@ -21,7 +21,12 @@ public class QueryRequest
     public int TopK { get; set; } = 5;
 
     /// <summary>
-    /// Whether to use hybrid search (default: true)
+    /// Whether to use hybrid search (default: false; vector-only measured better on the eval set)
     /// </summary>
-    public bool UseHybrid { get; set; } = true;
+    public bool UseHybrid { get; set; } = false;
+
+    /// <summary>
+    /// Whether to rewrite the question into extra phrasings and search with all of them (default: false; one extra LLM call)
+    /// </summary>
+    public bool UseMultiQuery { get; set; } = false;
 }
